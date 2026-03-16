@@ -20,7 +20,12 @@ def interview():
     data = request.json
     user_message = data.get('message', '')
     
+    # TODO: Add conversation history tracking
+    # Right now just sending single messages, need to maintain context
+    # Maybe use session storage or database?
+    
     # Call Groq API
+    # NOTE: Switched from Gemini because of quota issues - Groq is faster anyway
     chat_completion = client.chat.completions.create(
         messages=[
             {
@@ -32,9 +37,10 @@ def interview():
                 "content": user_message
             }
         ],
-        model="llama-3.3-70b-versatile",
+        model="llama-3.3-70b-versatile",  # tried llama-3.1 first but it got decommissioned
     )
     
+    # FIXME: Need better error handling here
     return jsonify({'response': chat_completion.choices[0].message.content})
 
 if __name__ == '__main__':
