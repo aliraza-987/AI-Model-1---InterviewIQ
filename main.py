@@ -6,6 +6,17 @@ from groq import Groq
 # Load environment variables
 load_dotenv()
 
+# TODO for v2.0:
+# - Add user authentication so people can save their practice sessions
+# - Track performance over time (how many questions answered correctly)
+# - Maybe add voice mode? Would be cool to practice speaking answers out loud
+# - Add a timer for each question (simulate real interview pressure)
+
+app = Flask(__name__)
+
+# Load environment variables
+load_dotenv()
+
 app = Flask(__name__)
 app.secret_key = os.urandom(24)  # needed for session management
 
@@ -55,7 +66,8 @@ def interview():
         "content": ai_response
     })
     
-    # Keep conversation from getting too long (last 20 messages only)
+   # Keep conversation from getting too long (last 20 messages)
+    # NOTE: Had this at 10 before but was cutting off context too early
     if len(session['conversation']) > 20:
         session['conversation'] = session['conversation'][-20:]
     
