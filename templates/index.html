@@ -3,15 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>InterviewIQ - AI Mock Interview</title>
-    <!-- Built this during spring break - wanted to practice interviews without bugging friends -->
+    <title>InterviewIQ</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+    
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
         
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-primary: #FAFAF9;
+            --bg-secondary: #FFFFFF;
+            --bg-tertiary: #F5F5F4;
+            --text-primary: #0A0A0A;
+            --text-secondary: #737373;
+            --text-tertiary: #A3A3A3;
+            --border-primary: #E7E5E4;
+            --border-secondary: #D6D3D1;
+            --accent: #2563EB;
+            --accent-hover: #1D4ED8;
+            --accent-light: #DBEAFE;
+            --success: #059669;
+            --warning: #D97706;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+        
+        [data-theme="dark"] {
+            --bg-primary: #0F0F0F;
+            --bg-secondary: #1A1A1A;
+            --bg-tertiary: #262626;
+            --text-primary: #FAFAFA;
+            --text-secondary: #A3A3A3;
+            --text-tertiary: #737373;
+            --border-primary: #262626;
+            --border-secondary: #404040;
+            --accent-light: #1E3A8A;
         }
         
         html, body {
@@ -20,339 +55,754 @@
         }
         
         body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
             display: flex;
             flex-direction: column;
+            font-size: 15px;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
         }
         
-        .header {
-            text-align: center;
-            padding: 30px 20px 20px;
-            background: rgba(0, 0, 0, 0.2);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        /* Topbar */
+        .topbar {
+            height: 52px;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border-primary);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 16px;
+            position: relative;
+            z-index: 100;
         }
         
-        h1 {
-            color: #ffffff;
-            font-size: 2.2em;
-            font-weight: 700;
-            margin-bottom: 5px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+        .topbar-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
         }
         
-        .subtitle {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.95em;
-            font-weight: 400;
+        .app-name {
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: -0.01em;
         }
         
-        /* Chat area - scrollable */
+        .session-info {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+        
+        .session-info-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .session-info-value {
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .icon-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.15s ease;
+        }
+        
+        .icon-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .btn-new {
+            height: 32px;
+            padding: 0 12px;
+            border-radius: 6px;
+            border: 1px solid var(--border-primary);
+            background: var(--bg-secondary);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+        }
+        
+        .btn-new:hover {
+            border-color: var(--border-secondary);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        /* Main content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        
+        /* Chat container */
         .chat-container {
             flex: 1;
-            overflow-y: auto;
-            padding: 20px;
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
         }
         
-        .chat-container::-webkit-scrollbar {
+        .messages-wrapper {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px 24px 0;
+        }
+        
+        .messages-wrapper::-webkit-scrollbar {
             width: 8px;
         }
         
-        .chat-container::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
+        .messages-wrapper::-webkit-scrollbar-track {
+            background: transparent;
         }
         
-        .chat-container::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
+        .messages-wrapper::-webkit-scrollbar-thumb {
+            background: var(--border-secondary);
+            border-radius: 4px;
         }
         
-        .message {
-            padding: 14px 18px;
-            border-radius: 12px;
-            max-width: 70%;
-            animation: slideIn 0.3s ease-out;
+        /* Messages */
+        .message-group {
+            margin-bottom: 32px;
+        }
+        
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .message-avatar {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        
+        .message-avatar.user {
+            background: var(--accent);
+            color: white;
+        }
+        
+        .message-avatar.ai {
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border-primary);
+        }
+        
+        .message-name {
+            font-size: 13px;
+            font-weight: 600;
+        }
+        
+        .message-content {
+            padding-left: 36px;
+            color: var(--text-primary);
+            line-height: 1.7;
+        }
+        
+        .message-content p {
+            margin: 0 0 12px 0;
+        }
+        
+        .message-content p:last-child {
+            margin-bottom: 0;
+        }
+        
+        .message-content strong {
+            font-weight: 600;
+        }
+        
+        .message-content code:not(pre code) {
+            background: var(--bg-tertiary);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
+            border: 1px solid var(--border-primary);
+        }
+        
+        .message-content pre {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            padding: 16px;
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+        
+        .message-content pre code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 13px;
             line-height: 1.6;
         }
         
-        @keyframes slideIn {
-            from {
-                opacity: 0;
-                transform: translateY(10px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+        .message-content ul,
+        .message-content ol {
+            margin: 12px 0;
+            padding-left: 24px;
         }
         
-        .user-message {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            margin-left: auto;
-            text-align: right;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        .message-content li {
+            margin: 6px 0;
         }
         
-        .ai-message {
-            background: rgba(255, 255, 255, 0.08);
-            color: rgba(255, 255, 255, 0.95);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            margin-right: auto;
-        }
-        
-        /* Input area - FIXED at bottom */
-        .input-container {
-            padding: 20px;
-            background: rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(20px);
-            border-top: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .input-area {
-            max-width: 900px;
-            margin: 0 auto;
+        .message-actions {
+            padding-left: 36px;
+            margin-top: 8px;
             display: flex;
+            gap: 4px;
+        }
+        
+        .message-action-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 5px;
+            border: none;
+            background: transparent;
+            color: var(--text-tertiary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: all 0.15s ease;
+        }
+        
+        .message-action-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-secondary);
+        }
+        
+        .message-action-btn.active {
+            color: var(--accent);
+        }
+        
+        /* Typing indicator */
+        .typing-indicator {
+            margin-bottom: 32px;
+        }
+        
+        .typing-dots {
+            padding-left: 36px;
+            display: flex;
+            gap: 4px;
+        }
+        
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--text-tertiary);
+            animation: typingPulse 1.4s infinite;
+        }
+        
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes typingPulse {
+            0%, 60%, 100% { opacity: 0.3; }
+            30% { opacity: 1; }
+        }
+        
+        /* Welcome state */
+        .welcome-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 400px;
+            padding: 48px 24px;
+        }
+        
+        .welcome-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+        
+        .welcome-subtitle {
+            font-size: 14px;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+        
+        .interview-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
             gap: 12px;
+            width: 100%;
+            max-width: 700px;
+        }
+        
+        .interview-option {
+            padding: 20px;
+            border: 1px solid var(--border-primary);
+            border-radius: 10px;
+            background: var(--bg-secondary);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-align: left;
+        }
+        
+        .interview-option:hover {
+            border-color: var(--accent);
+            box-shadow: var(--shadow-md);
+            transform: translateY(-2px);
+        }
+        
+        .interview-option-icon {
+            font-size: 24px;
+            margin-bottom: 12px;
+            display: block;
+        }
+        
+        .interview-option-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 4px;
+        }
+        
+        .interview-option-desc {
+            font-size: 13px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        
+        /* Input area */
+        .input-area {
+            padding: 16px 24px 24px;
+            background: var(--bg-primary);
+            border-top: 1px solid var(--border-primary);
+        }
+        
+        .input-wrapper {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 12px;
+            padding: 8px;
+            transition: all 0.15s ease;
+        }
+        
+        .input-wrapper:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+        
+        .input-tools {
+            display: flex;
+            gap: 4px;
+        }
+        
+        .input-tool-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            transition: all 0.15s ease;
+        }
+        
+        .input-tool-btn:hover {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        .input-tool-btn.recording {
+            color: #EF4444;
+            animation: recordingPulse 1.5s infinite;
+        }
+        
+        @keyframes recordingPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
         }
         
         #userInput {
             flex: 1;
-            padding: 16px 20px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            font-size: 16px;
-            color: white;
-            transition: all 0.3s ease;
+            border: none;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            outline: none;
+            resize: none;
+            max-height: 200px;
+            padding: 6px 8px;
+            line-height: 1.5;
         }
         
         #userInput::placeholder {
-            color: rgba(255, 255, 255, 0.4);
-        }
-        
-        #userInput:focus {
-            outline: none;
-            border-color: #667eea;
-            background: rgba(255, 255, 255, 0.12);
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+            color: var(--text-tertiary);
         }
         
         #sendBtn {
-            padding: 16px 32px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
             border: none;
-            border-radius: 12px;
+            background: var(--accent);
+            color: white;
             cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             font-size: 16px;
-            font-weight: 600;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            transition: all 0.15s ease;
+            flex-shrink: 0;
         }
         
         #sendBtn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+            background: var(--accent-hover);
         }
         
-        #sendBtn:active {
-            transform: translateY(0);
+        #sendBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         
-        @media (max-width: 600px) {
-            h1 {
-                font-size: 1.8em;
+        /* Mobile */
+        @media (max-width: 768px) {
+            .session-info {
+                display: none;
             }
             
-            .message {
-                max-width: 85%;
+            .topbar {
+                padding: 0 12px;
             }
-        }
-        .typing-indicator {
-            display: flex;
-            gap: 4px;
-            padding: 14px 18px;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            max-width: 70px;
-            margin-right: auto;
-        }
-        
-        .typing-indicator span {
-            width: 8px;
-            height: 8px;
-            background: rgba(255, 255, 255, 0.6);
-            border-radius: 50%;
-            animation: typing 1.4s infinite;
-        }
-        
-        .typing-indicator span:nth-child(2) {
-            animation-delay: 0.2s;
-        }
-        
-        .typing-indicator span:nth-child(3) {
-            animation-delay: 0.4s;
-        }
-        
-        @keyframes typing {
-            0%, 60%, 100% {
-                transform: translateY(0);
-                opacity: 0.6;
+            
+            .messages-wrapper {
+                padding: 16px 16px 0;
             }
-            30% {
-                transform: translateY(-10px);
-                opacity: 1;
+            
+            .input-area {
+                padding: 12px 12px 16px;
+            }
+            
+            .interview-options {
+                grid-template-columns: 1fr;
             }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <h1>🎯 InterviewIQ</h1>
-        <p class="subtitle">AI-Powered Technical Interview Practice</p>
-        <button onclick="clearChat()" style="margin-top: 15px; padding: 8px 20px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.3s;">🔄 Start New Interview</button>
+    <!-- Topbar -->
+    <div class="topbar">
+        <div class="topbar-left">
+            <div class="app-name">InterviewIQ</div>
+            <div class="session-info">
+                <div class="session-info-item">
+                    <span>⏱</span>
+                    <span class="session-info-value" id="sessionTime">0:00</span>
+                </div>
+                <div class="session-info-item">
+                    <span>💬</span>
+                    <span class="session-info-value" id="messageCount">0</span>
+                </div>
+                <div class="session-info-item" id="typeDisplay" style="display: none;">
+                    <span>📋</span>
+                    <span class="session-info-value" id="interviewType"></span>
+                </div>
+            </div>
+        </div>
+        <div class="topbar-right">
+            <button class="icon-btn" onclick="toggleTheme()" title="Toggle theme">🌓</button>
+            <button class="btn-new" onclick="clearChat()">
+                <span>↻</span>
+                <span>New</span>
+            </button>
+        </div>
     </div>
     
-    <div class="chat-container" id="chatBox">
-        <div class="message ai-message">
-            Hey! I'm your AI interviewer. What type of interview would you like to practice today?
-        </div>
-        <div class="message ai-message" style="display: flex; gap: 10px; max-width: 100%; flex-wrap: wrap;">
-            <button onclick="startInterview('coding')" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">💻 Coding Interview</button>
-            <button onclick="startInterview('behavioral')" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">🗣️ Behavioral Interview</button>
-            <button onclick="startInterview('system design')" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">🏗️ System Design</button>
-        </div>
-    </div>
-    
-    <div class="input-container">
-        <div class="input-area">
-            <input type="text" id="userInput" placeholder="Type your message..." />
-            <button id="sendBtn" onclick="sendMessage()">Send</button>
+    <!-- Main -->
+    <div class="main-content">
+        <div class="chat-container">
+            <div class="messages-wrapper" id="chatBox">
+                <!-- Welcome state -->
+                <div class="welcome-state" id="welcomeState">
+                    <div class="welcome-title">What would you like to practice?</div>
+                    <div class="welcome-subtitle">Choose an interview type to get started</div>
+                    
+                    <div class="interview-options">
+                        <div class="interview-option" onclick="startInterview('coding')">
+                            <span class="interview-option-icon">💻</span>
+                            <div class="interview-option-title">Coding Interview</div>
+                            <div class="interview-option-desc">Practice algorithms and data structures</div>
+                        </div>
+                        
+                        <div class="interview-option" onclick="startInterview('behavioral')">
+                            <span class="interview-option-icon">💬</span>
+                            <div class="interview-option-title">Behavioral Interview</div>
+                            <div class="interview-option-desc">Master the STAR method</div>
+                        </div>
+                        
+                        <div class="interview-option" onclick="startInterview('system design')">
+                            <span class="interview-option-icon">🏗</span>
+                            <div class="interview-option-title">System Design</div>
+                            <div class="interview-option-desc">Design scalable systems</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Input -->
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <div class="input-tools">
+                        <button class="input-tool-btn" id="voiceBtn" onclick="toggleVoice()" title="Voice input">🎤</button>
+                    </div>
+                    <textarea id="userInput" placeholder="Type a message..." rows="1"></textarea>
+                    <button id="sendBtn" onclick="sendMessage()">↑</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
+        // Initialize
+        marked.setOptions({
+            highlight: function(code, lang) {
+                if (lang && hljs.getLanguage(lang)) {
+                    return hljs.highlight(code, { language: lang }).value;
+                }
+                return hljs.highlightAuto(code).value;
+            },
+            breaks: true,
+            gfm: true
+        });
+        
+        let sessionStartTime = Date.now();
+        let messageCount = 0;
+        let currentType = null;
+        let recognition = null;
+        let isRecording = false;
+        
+        // Speech recognition
+        if ('webkitSpeechRecognition' in window) {
+            recognition = new webkitSpeechRecognition();
+            recognition.continuous = false;
+            recognition.onresult = (e) => {
+                document.getElementById('userInput').value = e.results[0][0].transcript;
+                stopVoice();
+            };
+            recognition.onerror = stopVoice;
+            recognition.onend = stopVoice;
+        }
+        
+        // Session timer
+        setInterval(() => {
+            const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
+            const m = Math.floor(elapsed / 60);
+            const s = elapsed % 60;
+            document.getElementById('sessionTime').textContent = `${m}:${s.toString().padStart(2, '0')}`;
+        }, 1000);
+        
+        // Auto-resize textarea
+        const textarea = document.getElementById('userInput');
+        textarea.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = (this.scrollHeight) + 'px';
+        });
+        
         function startInterview(type) {
-            // Hide the buttons after selection
-            const buttons = document.querySelectorAll('button[onclick^="startInterview"]');
-            buttons.forEach(btn => btn.parentElement.style.display = 'none');
+            currentType = type;
+            document.getElementById('welcomeState').remove();
+            document.getElementById('typeDisplay').style.display = 'flex';
+            document.getElementById('interviewType').textContent = type.charAt(0).toUpperCase() + type.slice(1);
             
-            // Send the interview type selection
-            addMessage(`I'd like to practice ${type} interviews`, 'user-message');
+            addMessage(`I'd like to practice ${type} interviews`, 'user');
             
             fetch('/interview', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ message: `Start a ${type} interview` })
             })
-            .then(response => response.json())
-            .then(data => {
-                addMessage(data.response, 'ai-message');
-            })
-            .catch(error => {
-                addMessage('Error: Could not connect to AI', 'ai-message');
-            });
+            .then(r => r.json())
+            .then(d => addMessage(d.response, 'ai'))
+            .catch(() => addMessage('Connection error', 'ai'));
         }
+        
         function sendMessage() {
             const input = document.getElementById('userInput');
-            const message = input.value.trim();
+            const msg = input.value.trim();
+            if (!msg) return;
             
-            if (!message) return;
+            messageCount++;
+            document.getElementById('messageCount').textContent = messageCount;
             
-            addMessage(message, 'user-message');
+            addMessage(msg, 'user');
             input.value = '';
+            input.style.height = 'auto';
             
-            // Show typing indicator
-            const chatBox = document.getElementById('chatBox');
-            const typingDiv = document.createElement('div');
-            typingDiv.className = 'typing-indicator';
-            typingDiv.id = 'typing';
-            typingDiv.innerHTML = '<span></span><span></span><span></span>';
-            chatBox.appendChild(typingDiv);
-            chatBox.scrollTop = chatBox.scrollHeight;
+            showTyping();
             
             fetch('/interview', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ message: message })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: msg })
             })
-            .then(response => response.json())
-            .then(data => {
-                // Remove typing indicator
-                const typing = document.getElementById('typing');
-                if (typing) typing.remove();
-                
-                addMessage(data.response, 'ai-message');
+            .then(r => r.json())
+            .then(d => {
+                hideTyping();
+                addMessage(d.response, 'ai');
             })
-            .catch(error => {
-                // Remove typing indicator
-                const typing = document.getElementById('typing');
-                if (typing) typing.remove();
-                
-                addMessage('Error: Could not connect to AI', 'ai-message');
+            .catch(() => {
+                hideTyping();
+                addMessage('Connection error', 'ai');
             });
         }
         
-        function addMessage(text, className) {
+        function addMessage(text, role) {
             const chatBox = document.getElementById('chatBox');
-            const messageDiv = document.createElement('div');
-            messageDiv.className = 'message ' + className;
-            messageDiv.textContent = text;
+            const group = document.createElement('div');
+            group.className = 'message-group';
             
-            // Add feedback buttons only for AI messages
-            if (className === 'ai-message') {
-                const feedbackDiv = document.createElement('div');
-                feedbackDiv.style.cssText = 'margin-top: 8px; display: flex; gap: 8px; font-size: 18px;';
-                feedbackDiv.innerHTML = `
-                    <button onclick="this.style.opacity='0.3'; this.disabled=true;" style="background: none; border: none; cursor: pointer; font-size: 18px; transition: opacity 0.3s;" title="Helpful">👍</button>
-                    <button onclick="this.style.opacity='0.3'; this.disabled=true;" style="background: none; border: none; cursor: pointer; font-size: 18px; transition: opacity 0.3s;" title="Not helpful">👎</button>
+            const header = document.createElement('div');
+            header.className = 'message-header';
+            
+            const avatar = document.createElement('div');
+            avatar.className = `message-avatar ${role}`;
+            avatar.textContent = role === 'user' ? '👤' : '🤖';
+            
+            const name = document.createElement('div');
+            name.className = 'message-name';
+            name.textContent = role === 'user' ? 'You' : 'Interviewer';
+            
+            header.appendChild(avatar);
+            header.appendChild(name);
+            
+            const content = document.createElement('div');
+            content.className = 'message-content';
+            
+            if (role === 'ai') {
+                content.innerHTML = marked.parse(text);
+                
+                const actions = document.createElement('div');
+                actions.className = 'message-actions';
+                actions.innerHTML = `
+                    <button class="message-action-btn" onclick="feedback(this, 'up')">👍</button>
+                    <button class="message-action-btn" onclick="feedback(this, 'down')">👎</button>
                 `;
-                messageDiv.appendChild(feedbackDiv);
+                group.appendChild(header);
+                group.appendChild(content);
+                group.appendChild(actions);
+            } else {
+                content.textContent = text;
+                group.appendChild(header);
+                group.appendChild(content);
             }
             
-            chatBox.appendChild(messageDiv);
+            chatBox.appendChild(group);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
         
-        document.getElementById('userInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
+        function showTyping() {
+            const chatBox = document.getElementById('chatBox');
+            const typing = document.createElement('div');
+            typing.className = 'typing-indicator';
+            typing.id = 'typing';
+            typing.innerHTML = `
+                <div class="message-header">
+                    <div class="message-avatar ai">🤖</div>
+                    <div class="message-name">Interviewer</div>
+                </div>
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            chatBox.appendChild(typing);
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+        
+        function hideTyping() {
+            const typing = document.getElementById('typing');
+            if (typing) typing.remove();
+        }
+        
+        function feedback(btn, type) {
+            btn.classList.add('active');
+            btn.disabled = true;
+        }
+        
+        function toggleVoice() {
+            if (!recognition) return alert('Voice not supported');
+            if (isRecording) {
+                stopVoice();
+            } else {
+                isRecording = true;
+                document.getElementById('voiceBtn').classList.add('recording');
+                recognition.start();
+            }
+        }
+        
+        function stopVoice() {
+            isRecording = false;
+            document.getElementById('voiceBtn').classList.remove('recording');
+            if (recognition) recognition.stop();
+        }
+        
+        function clearChat() {
+            if (confirm('Start new interview?')) location.reload();
+        }
+        
+        function toggleTheme() {
+            document.body.dataset.theme = document.body.dataset.theme === 'dark' ? '' : 'dark';
+        }
+        
+        // Enter to send (Shift+Enter for new line)
+        textarea.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
                 sendMessage();
             }
         });
-        function clearChat() {
-            // Clear the chat display
-            const chatBox = document.getElementById('chatBox');
-            chatBox.innerHTML = `
-                <div class="message ai-message">
-                    Hey! I'm your AI interviewer. What type of interview would you like to practice today?
-                </div>
-                <div class="message ai-message" style="display: flex; gap: 10px; max-width: 100%; flex-wrap: wrap;">
-                    <button onclick="startInterview('coding')" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">💻 Coding Interview</button>
-                    <button onclick="startInterview('behavioral')" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">🗣️ Behavioral Interview</button>
-                    <button onclick="startInterview('system design')" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">🏗️ System Design</button>
-                </div>
-            `;
-            
-            // Clear server-side session by reloading the page
-            location.reload();
-        }
     </script>
-    <div style="text-align: center; padding: 20px; color: rgba(255, 255, 255, 0.5); font-size: 14px;">
-        Built by <a href="https://github.com/aliraza-987" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 600;">Ali Raza</a> | 
-        <a href="https://github.com/aliraza-987/AI-Model-1---InterviewIQ" target="_blank" style="color: #667eea; text-decoration: none;">View Source</a>
-    </div>
 </body>
 </html>
