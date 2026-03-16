@@ -4,115 +4,195 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>InterviewIQ - AI Mock Interview</title>
+    <!-- Built this during spring break - wanted to practice interviews without bugging friends -->
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
         
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
+        html, body {
+            height: 100%;
+            overflow: hidden;
         }
         
-        .container {
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            max-width: 800px;
-            width: 100%;
-            padding: 40px;
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f0c29, #302b63, #24243e);
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            text-align: center;
+            padding: 30px 20px 20px;
+            background: rgba(0, 0, 0, 0.2);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         h1 {
-            color: #667eea;
-            margin-bottom: 10px;
-            font-size: 2.5em;
+            color: #ffffff;
+            font-size: 2.2em;
+            font-weight: 700;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
         
         .subtitle {
-            color: #666;
-            margin-bottom: 30px;
-            font-size: 1.1em;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.95em;
+            font-weight: 400;
         }
         
-        .chat-box {
-            background: #f5f5f5;
-            border-radius: 10px;
-            padding: 20px;
-            height: 400px;
+        /* Chat area - scrollable */
+        .chat-container {
+            flex: 1;
             overflow-y: auto;
-            margin-bottom: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .chat-container::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        
+        .chat-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
         }
         
         .message {
-            margin-bottom: 15px;
-            padding: 10px 15px;
-            border-radius: 10px;
-            max-width: 80%;
+            padding: 14px 18px;
+            border-radius: 12px;
+            max-width: 70%;
+            animation: slideIn 0.3s ease-out;
+            line-height: 1.6;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
         
         .user-message {
-            background: #667eea;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             margin-left: auto;
             text-align: right;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
         
         .ai-message {
-            background: white;
-            color: #333;
-            border: 1px solid #ddd;
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.95);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            margin-right: auto;
+        }
+        
+        /* Input area - FIXED at bottom */
+        .input-container {
+            padding: 20px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
         
         .input-area {
+            max-width: 900px;
+            margin: 0 auto;
             display: flex;
-            gap: 10px;
+            gap: 12px;
         }
         
         #userInput {
             flex: 1;
-            padding: 15px;
-            border: 2px solid #667eea;
-            border-radius: 10px;
+            padding: 16px 20px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
             font-size: 16px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        
+        #userInput::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+        
+        #userInput:focus {
+            outline: none;
+            border-color: #667eea;
+            background: rgba(255, 255, 255, 0.12);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
         }
         
         #sendBtn {
-            padding: 15px 30px;
-            background: #667eea;
+            padding: 16px 32px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            border-radius: 10px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 16px;
-            font-weight: bold;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
         }
         
         #sendBtn:hover {
-            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+        
+        #sendBtn:active {
+            transform: translateY(0);
+        }
+        
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.8em;
+            }
+            
+            .message {
+                max-width: 85%;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="header">
         <h1>🎯 InterviewIQ</h1>
-        <p class="subtitle">AI-Powered Mock Interview Practice</p>
-        
-        <div class="chat-box" id="chatBox">
-            <div class="message ai-message">
-                Hello! I'm your AI interviewer. Type "start" to begin your mock interview.
-            </div>
+        <p class="subtitle">AI-Powered Technical Interview Practice</p>
+    </div>
+    
+    <div class="chat-container" id="chatBox">
+        <div class="message ai-message">
+            Hey! I'm your AI interviewer. Ready to practice? Type "start" to begin, or tell me what kind of interview you want to practice (coding, behavioral, system design, etc.)
         </div>
-        
+    </div>
+    
+    <div class="input-container">
         <div class="input-area">
-            <input type="text" id="userInput" placeholder="Type your message here..." />
+            <input type="text" id="userInput" placeholder="Type your message..." />
             <button id="sendBtn" onclick="sendMessage()">Send</button>
         </div>
     </div>
@@ -124,11 +204,9 @@
             
             if (!message) return;
             
-            // Display user message
             addMessage(message, 'user-message');
             input.value = '';
             
-            // Send to backend
             fetch('/interview', {
                 method: 'POST',
                 headers: {
@@ -154,7 +232,6 @@
             chatBox.scrollTop = chatBox.scrollHeight;
         }
         
-        // Allow Enter key to send message
         document.getElementById('userInput').addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 sendMessage();
