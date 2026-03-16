@@ -176,17 +176,60 @@
                 max-width: 85%;
             }
         }
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 14px 18px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            max-width: 70px;
+            margin-right: auto;
+        }
+        
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: rgba(255, 255, 255, 0.6);
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+        
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes typing {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.6;
+            }
+            30% {
+                transform: translateY(-10px);
+                opacity: 1;
+            }
+        }
     </style>
 </head>
 <body>
     <div class="header">
         <h1>🎯 InterviewIQ</h1>
         <p class="subtitle">AI-Powered Technical Interview Practice</p>
+        <button onclick="clearChat()" style="margin-top: 15px; padding: 8px 20px; background: rgba(255, 255, 255, 0.1); color: white; border: 1px solid rgba(255, 255, 255, 0.2); border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.3s;">🔄 Start New Interview</button>
     </div>
     
     <div class="chat-container" id="chatBox">
         <div class="message ai-message">
-            Hey! I'm your AI interviewer. Ready to practice? Type "start" to begin, or tell me what kind of interview you want to practice (coding, behavioral, system design, etc.)
+            Hey! I'm your AI interviewer. What type of interview would you like to practice today?
+        </div>
+        <div class="message ai-message" style="display: flex; gap: 10px; max-width: 100%; flex-wrap: wrap;">
+            <button onclick="startInterview('coding')" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">💻 Coding Interview</button>
+            <button onclick="startInterview('behavioral')" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">🗣️ Behavioral Interview</button>
+            <button onclick="startInterview('system design')" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">🏗️ System Design</button>
         </div>
     </div>
     
@@ -198,6 +241,29 @@
     </div>
 
     <script>
+        function startInterview(type) {
+            // Hide the buttons after selection
+            const buttons = document.querySelectorAll('button[onclick^="startInterview"]');
+            buttons.forEach(btn => btn.parentElement.style.display = 'none');
+            
+            // Send the interview type selection
+            addMessage(`I'd like to practice ${type} interviews`, 'user-message');
+            
+            fetch('/interview', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: `Start a ${type} interview` })
+            })
+            .then(response => response.json())
+            .then(data => {
+                addMessage(data.response, 'ai-message');
+            })
+            .catch(error => {
+                addMessage('Error: Could not connect to AI', 'ai-message');
+            });
+        }
         function sendMessage() {
             const input = document.getElementById('userInput');
             const message = input.value.trim();
@@ -206,6 +272,15 @@
             
             addMessage(message, 'user-message');
             input.value = '';
+            
+            // Show typing indicator
+            const chatBox = document.getElementById('chatBox');
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'typing-indicator';
+            typingDiv.id = 'typing';
+            typingDiv.innerHTML = '<span></span><span></span><span></span>';
+            chatBox.appendChild(typingDiv);
+            chatBox.scrollTop = chatBox.scrollHeight;
             
             fetch('/interview', {
                 method: 'POST',
@@ -216,9 +291,17 @@
             })
             .then(response => response.json())
             .then(data => {
+                // Remove typing indicator
+                const typing = document.getElementById('typing');
+                if (typing) typing.remove();
+                
                 addMessage(data.response, 'ai-message');
             })
             .catch(error => {
+                // Remove typing indicator
+                const typing = document.getElementById('typing');
+                if (typing) typing.remove();
+                
                 addMessage('Error: Could not connect to AI', 'ai-message');
             });
         }
@@ -228,6 +311,18 @@
             const messageDiv = document.createElement('div');
             messageDiv.className = 'message ' + className;
             messageDiv.textContent = text;
+            
+            // Add feedback buttons only for AI messages
+            if (className === 'ai-message') {
+                const feedbackDiv = document.createElement('div');
+                feedbackDiv.style.cssText = 'margin-top: 8px; display: flex; gap: 8px; font-size: 18px;';
+                feedbackDiv.innerHTML = `
+                    <button onclick="this.style.opacity='0.3'; this.disabled=true;" style="background: none; border: none; cursor: pointer; font-size: 18px; transition: opacity 0.3s;" title="Helpful">👍</button>
+                    <button onclick="this.style.opacity='0.3'; this.disabled=true;" style="background: none; border: none; cursor: pointer; font-size: 18px; transition: opacity 0.3s;" title="Not helpful">👎</button>
+                `;
+                messageDiv.appendChild(feedbackDiv);
+            }
+            
             chatBox.appendChild(messageDiv);
             chatBox.scrollTop = chatBox.scrollHeight;
         }
@@ -237,6 +332,27 @@
                 sendMessage();
             }
         });
+        function clearChat() {
+            // Clear the chat display
+            const chatBox = document.getElementById('chatBox');
+            chatBox.innerHTML = `
+                <div class="message ai-message">
+                    Hey! I'm your AI interviewer. What type of interview would you like to practice today?
+                </div>
+                <div class="message ai-message" style="display: flex; gap: 10px; max-width: 100%; flex-wrap: wrap;">
+                    <button onclick="startInterview('coding')" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">💻 Coding Interview</button>
+                    <button onclick="startInterview('behavioral')" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">🗣️ Behavioral Interview</button>
+                    <button onclick="startInterview('system design')" style="padding: 10px 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600;">🏗️ System Design</button>
+                </div>
+            `;
+            
+            // Clear server-side session by reloading the page
+            location.reload();
+        }
     </script>
+    <div style="text-align: center; padding: 20px; color: rgba(255, 255, 255, 0.5); font-size: 14px;">
+        Built by <a href="https://github.com/aliraza-987" target="_blank" style="color: #667eea; text-decoration: none; font-weight: 600;">Ali Raza</a> | 
+        <a href="https://github.com/aliraza-987/AI-Model-1---InterviewIQ" target="_blank" style="color: #667eea; text-decoration: none;">View Source</a>
+    </div>
 </body>
 </html>
