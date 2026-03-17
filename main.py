@@ -1,18 +1,17 @@
-from flask import Flask, render_template, request, jsonify, session, send_file
+from flask import Flask, render_template, request, jsonify, session, send_file, Response
 from dotenv import load_dotenv
 import os
 from groq import Groq
 import sqlite3
 from datetime import datetime
 import json
+import io
 
-# Load environment variables
 load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.urandom(24)
 
-# Configure Groq
 client = Groq(api_key=os.getenv('GROQ_API_KEY'))
 
 # Database setup
@@ -23,9 +22,12 @@ def init_db():
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   session_id TEXT,
                   interview_type TEXT,
+                  difficulty TEXT,
                   timestamp TEXT,
                   messages TEXT,
-                  rating INTEGER)''')
+                  rating INTEGER,
+                  duration INTEGER,
+                  message_count INTEGER)''')
     conn.commit()
     conn.close()
 
@@ -33,22 +35,137 @@ init_db()
 
 @app.route('/')
 def home():
-    # Generate unique session ID
     if 'session_id' not in session:
         session['session_id'] = os.urandom(16).hex()
-    session.clear()
-    session['session_id'] = os.urandom(16).hex()
+    session['start_time'] = datetime.now().isoformat()
     return render_template('index.html')
 
-@app.route('/interview', methods=['POST'])
-def interview():
+# System prompts for different interview types and difficulties
+def get_system_prompts():
+    return {
+        'coding': {
+            'easy': """You are an expert technical interviewer at a top tech company.
+
+Ask EASY coding questions suitable for junior developers and new graduates.
+Examples: Two Sum, Reverse String, Valid Palindrome, FizzBuzz
+
+After each answer:
+- Explain time/space complexity
+- Suggest optimizations
+- Be very encouraging
+- Ask follow-up questions
+
+Use markdown with code blocks. Keep explanations clear and simple.""",
+            
+            'medium': """You are an expert technical interviewer at a top tech company.
+
+Ask MEDIUM difficulty coding questions (LeetCode Medium level).
+Focus on: arrays, hashmaps, trees, graphs, BFS, DFS, dynamic programming basics.
+
+After each answer:
+- Analyze time/space complexity
+- Discuss edge cases
+- Suggest optimizations
+- Ask about alternative approaches
+
+Use markdown with code blocks.""",
+            
+            'hard': """You are an expert technical interviewer at FAANG companies.
+
+Ask HARD coding questions (LeetCode Hard level).
+Advanced algorithms: DP, graphs, trees, optimization.
+
+After each answer:
+- Deep dive into complexity analysis
+- Discuss all edge cases
+- Compare multiple solutions
+- Ask about scalability
+
+Be rigorous but fair. Use markdown with code blocks."""
+        },
+        
+        'behavioral': {
+            'easy': """You are a friendly HR interviewer for entry-level positions.
+
+Ask basic behavioral questions using STAR method:
+- Tell me about yourself
+- Why this company?
+- Describe a team project
+
+Be warm and encouraging. Help them structure answers.""",
+            
+            'medium': """You are an experienced HR interviewer for mid-level positions.
+
+Ask deeper behavioral questions:
+- Describe a conflict with a coworker
+- Tell me about a failed project
+- Leadership experience
+
+Probe for specifics. Ask follow-ups like "What was the outcome?"
+Look for self-awareness and growth mindset.""",
+            
+            'hard': """You are a senior executive interviewer for leadership roles.
+
+Ask challenging behavioral questions:
+- Biggest professional failure and learnings
+- How you influenced organizational change
+- Making unpopular decisions
+- Handling ambiguity
+
+Expect detailed, reflective answers. Probe deeply. Assess strategic thinking."""
+        },
+        
+        'system design': {
+            'easy': """You are a system design interviewer for junior positions.
+
+Ask simple system design questions:
+- Design a URL shortener
+- Design a basic chat app
+- Design a parking lot system
+
+Guide them through: requirements, high-level design, database schema, APIs.
+Be patient and helpful.""",
+            
+            'medium': """You are a system design interviewer for mid-level engineers.
+
+Ask moderate system design questions:
+- Design Instagram
+- Design Twitter feed
+- Design Netflix
+
+Discuss: scalability, database choices, APIs, microservices, trade-offs.
+Ask about specific numbers (DAU, QPS, storage).""",
+            
+            'hard': """You are a system design interviewer for senior engineers.
+
+Ask complex system design questions:
+- Design Google Search
+- Design distributed cache
+- Design payment system
+
+Expect deep discussion of: distributed systems, CAP theorem, partitioning, 
+replication, fault tolerance, monitoring, cost optimization.
+
+Challenge design choices. Discuss failure scenarios."""
+        },
+        
+        'general': {
+            'easy': """You are a friendly AI interviewer. Be conversational and supportive.""",
+            'medium': """You are an AI interviewer. Be helpful but thorough. Ask follow-ups.""",
+            'hard': """You are a rigorous AI interviewer. Be challenging but fair."""
+        }
+    }
+
+@app.route('/interview_stream', methods=['POST'])
+def interview_stream():
     data = request.json
     user_message = data.get('message', '')
+    difficulty = data.get('difficulty', 'medium')
     
-    # Get or initialize conversation history
     if 'conversation' not in session:
         session['conversation'] = []
         session['interview_type'] = 'general'
+        session['difficulty'] = difficulty
     
     # Detect interview type from first message
     if len(session['conversation']) == 0:
@@ -60,147 +177,103 @@ def interview():
         elif 'system design' in lower_msg:
             session['interview_type'] = 'system design'
     
-    # Add user message to history
     session['conversation'].append({
         "role": "user",
         "content": user_message
     })
     
-    # Enhanced system prompts based on interview type
-    system_prompts = {
-        'coding': """You are an expert technical interviewer at a top tech company (Google, Meta, Amazon level).
-
-Your role:
-- Ask ONE coding question at a time
-- Start with easier problems, increase difficulty based on performance
-- After the candidate answers, give detailed feedback on:
-  * Time complexity
-  * Space complexity  
-  * Code quality and best practices
-  * Edge cases they missed
-  * Better approaches if any exist
-- Ask clarifying questions about their solution
-- Be encouraging but honest
-- Use markdown formatting with code blocks
-
-Example response format:
-"Great! Let me give you a problem:
-
-**Problem**: [Clear problem statement]
-```
-Example:
-Input: [example]
-Output: [example]
-```
-
-Take your time to think through the approach before coding."
-""",
-        'behavioral': """You are an experienced HR interviewer conducting behavioral interviews for senior positions.
-
-Your role:
-- Ask ONE behavioral question at a time using STAR method
-- Focus on: leadership, conflict resolution, teamwork, problem-solving
-- Listen for specific examples, not generic answers
-- Probe deeper with follow-up questions like "Can you tell me more about..." or "What was the outcome?"
-- Give constructive feedback on their answers
-- Be warm and encouraging
-
-Questions should assess real experience, not theoretical knowledge.""",
-        
-        'system design': """You are a senior architect interviewing candidates for system design skills.
-
-Your role:
-- Ask ONE system design question at a time
-- Start with requirements gathering (scale, features, constraints)
-- Guide them through: high-level design → detailed design → tradeoffs
-- Discuss: scalability, reliability, data storage, APIs, caching, load balancing
-- Ask about edge cases and failure scenarios
-- Give feedback on their architectural choices
-
-Example flow:
-1. "Design Instagram's feed" 
-2. Ask about scale (DAU, posts/day)
-3. Discuss components (API gateway, databases, CDN, etc.)
-4. Deep dive into specific areas""",
-        
-        'general': """You are a friendly AI interviewer helping people practice technical interviews.
-
-Be conversational, helpful, and adjust to what they want to practice."""
-    }
-    
     interview_type = session.get('interview_type', 'general')
-    system_prompt = system_prompts.get(interview_type, system_prompts['general'])
+    current_difficulty = session.get('difficulty', 'medium')
     
-    # Prepare messages for API
+    system_prompts = get_system_prompts()
+    system_prompt = system_prompts.get(interview_type, {}).get(current_difficulty, 
+                    system_prompts['general']['medium'])
+    
     messages = [
-        {
-            "role": "system",
-            "content": system_prompt
-        }
+        {"role": "system", "content": system_prompt}
     ] + session['conversation']
     
-    # Call Groq API with conversation context
-    try:
-        chat_completion = client.chat.completions.create(
-            messages=messages,
-            model="llama-3.3-70b-versatile",
-            temperature=0.7,
-            max_tokens=2000
-        )
-        
-        ai_response = chat_completion.choices[0].message.content
-        
-        # Add AI response to history
-        session['conversation'].append({
-            "role": "assistant",
-            "content": ai_response
-        })
-        
-        # Keep conversation from getting too long (last 20 messages)
-        # NOTE: Had this at 10 before but was cutting off context too early
-        if len(session['conversation']) > 20:
-            session['conversation'] = session['conversation'][-20:]
-        
-        session.modified = True
-        
-        return jsonify({'response': ai_response})
-        
-    except Exception as e:
-        return jsonify({'response': f'Error: {str(e)}'}), 500
+    def generate():
+        try:
+            stream = client.chat.completions.create(
+                messages=messages,
+                model="llama-3.3-70b-versatile",
+                temperature=0.8,
+                max_tokens=2500,
+                stream=True
+            )
+            
+            full_response = ""
+            import time
+            
+            for chunk in stream:
+                if chunk.choices[0].delta.content:
+                    content = chunk.choices[0].delta.content
+                    full_response += content
+                    
+                    # Add small delay for natural typing effect
+                    time.sleep(0.02)  # 20ms delay per chunk
+                    
+                    yield f"data: {json.dumps({'content': content})}\n\n"
+            
+            # Save to session after stream completes
+            session['conversation'].append({
+                "role": "assistant",
+                "content": full_response
+            })
+            
+            if len(session['conversation']) > 30:
+                session['conversation'] = session['conversation'][-30:]
+            
+            session.modified = True
+            
+            yield f"data: {json.dumps({'done': True})}\n\n"
+            
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+    
+    return Response(generate(), mimetype='text/event-stream')
 
 @app.route('/save_interview', methods=['POST'])
 def save_interview():
-    """Save interview to database"""
     try:
         data = request.json
+        rating = data.get('rating', 0)
+        
+        start_time = datetime.fromisoformat(session.get('start_time'))
+        duration = int((datetime.now() - start_time).total_seconds())
         
         conn = sqlite3.connect('interviews.db')
         c = conn.cursor()
         c.execute('''INSERT INTO interviews 
-                     (session_id, interview_type, timestamp, messages, rating)
-                     VALUES (?, ?, ?, ?, ?)''',
+                     (session_id, interview_type, difficulty, timestamp, messages, rating, duration, message_count)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
                   (session.get('session_id'),
                    session.get('interview_type', 'general'),
+                   session.get('difficulty', 'medium'),
                    datetime.now().isoformat(),
                    json.dumps(session.get('conversation', [])),
-                   data.get('rating', 0)))
+                   rating,
+                   duration,
+                   len(session.get('conversation', [])) // 2))
+        
+        interview_id = c.lastrowid
         conn.commit()
         conn.close()
         
-        return jsonify({'success': True})
+        return jsonify({'success': True, 'interview_id': interview_id})
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/get_history', methods=['GET'])
 def get_history():
-    """Get interview history"""
     try:
         conn = sqlite3.connect('interviews.db')
         c = conn.cursor()
-        c.execute('''SELECT id, interview_type, timestamp, rating 
+        c.execute('''SELECT id, interview_type, difficulty, timestamp, rating, duration, message_count
                      FROM interviews 
                      ORDER BY timestamp DESC 
-                     LIMIT 10''')
+                     LIMIT 20''')
         
         rows = c.fetchall()
         conn.close()
@@ -210,8 +283,11 @@ def get_history():
             history.append({
                 'id': row[0],
                 'type': row[1],
-                'date': row[2],
-                'rating': row[3]
+                'difficulty': row[2],
+                'date': row[3],
+                'rating': row[4],
+                'duration': row[5],
+                'message_count': row[6]
             })
         
         return jsonify({'history': history})
@@ -220,17 +296,21 @@ def get_history():
 
 @app.route('/get_interview/<int:interview_id>', methods=['GET'])
 def get_interview(interview_id):
-    """Get specific interview details"""
     try:
         conn = sqlite3.connect('interviews.db')
         c = conn.cursor()
-        c.execute('SELECT messages FROM interviews WHERE id = ?', (interview_id,))
+        c.execute('SELECT messages, interview_type, difficulty, timestamp FROM interviews WHERE id = ?', 
+                  (interview_id,))
         row = c.fetchone()
         conn.close()
         
         if row:
-            messages = json.loads(row[0])
-            return jsonify({'messages': messages})
+            return jsonify({
+                'messages': json.loads(row[0]),
+                'type': row[1],
+                'difficulty': row[2],
+                'timestamp': row[3]
+            })
         else:
             return jsonify({'error': 'Interview not found'}), 404
     except Exception as e:
@@ -238,60 +318,82 @@ def get_interview(interview_id):
 
 @app.route('/export_transcript', methods=['POST'])
 def export_transcript():
-    """Export current interview as text file"""
     try:
         conversation = session.get('conversation', [])
         
-        # Create transcript
         transcript = f"InterviewIQ - Interview Transcript\n"
-        transcript += f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        transcript += f"{'=' * 60}\n\n"
+        transcript += f"Date: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}\n"
         transcript += f"Type: {session.get('interview_type', 'general').title()}\n"
-        transcript += "=" * 50 + "\n\n"
+        transcript += f"Difficulty: {session.get('difficulty', 'medium').title()}\n"
+        transcript += f"Total Messages: {len(conversation)}\n"
+        transcript += f"\n{'=' * 60}\n\n"
         
-        for msg in conversation:
+        for i, msg in enumerate(conversation, 1):
             role = "You" if msg['role'] == 'user' else "Interviewer"
             transcript += f"{role}:\n{msg['content']}\n\n"
+            transcript += f"{'-' * 60}\n\n"
         
-        # Save to file
+        file_obj = io.BytesIO()
+        file_obj.write(transcript.encode('utf-8'))
+        file_obj.seek(0)
+        
         filename = f"interview_{datetime.now().strftime('%Y%m%d_%H%M%S')}.txt"
-        filepath = os.path.join('/tmp', filename)
         
-        with open(filepath, 'w', encoding='utf-8') as f:
-            f.write(transcript)
-        
-        return send_file(filepath, as_attachment=True, download_name=filename)
+        return send_file(
+            file_obj,
+            mimetype='text/plain',
+            as_attachment=True,
+            download_name=filename
+        )
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
 @app.route('/analytics', methods=['GET'])
 def analytics():
-    """Get analytics data"""
     try:
         conn = sqlite3.connect('interviews.db')
         c = conn.cursor()
         
-        # Total interviews
         c.execute('SELECT COUNT(*) FROM interviews')
         total = c.fetchone()[0]
         
-        # By type
         c.execute('SELECT interview_type, COUNT(*) FROM interviews GROUP BY interview_type')
-        by_type = dict(c.fetchall())
+        by_type = {row[0]: row[1] for row in c.fetchall()}
         
-        # Average rating
+        c.execute('SELECT difficulty, COUNT(*) FROM interviews GROUP BY difficulty')
+        by_difficulty = {row[0]: row[1] for row in c.fetchall()}
+        
         c.execute('SELECT AVG(rating) FROM interviews WHERE rating > 0')
         avg_rating = c.fetchone()[0] or 0
+        
+        c.execute('SELECT SUM(duration) FROM interviews')
+        total_time = c.fetchone()[0] or 0
+        
+        c.execute('SELECT AVG(duration) FROM interviews')
+        avg_duration = c.fetchone()[0] or 0
         
         conn.close()
         
         return jsonify({
             'total_interviews': total,
             'by_type': by_type,
-            'avg_rating': round(avg_rating, 2)
+            'by_difficulty': by_difficulty,
+            'avg_rating': round(avg_rating, 2),
+            'total_time_minutes': round(total_time / 60, 1),
+            'avg_duration_minutes': round(avg_duration / 60, 1)
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/set_difficulty', methods=['POST'])
+def set_difficulty():
+    data = request.json
+    difficulty = data.get('difficulty', 'medium')
+    session['difficulty'] = difficulty
+    session.modified = True
+    return jsonify({'success': True})
 
 if __name__ == '__main__':
     import os
