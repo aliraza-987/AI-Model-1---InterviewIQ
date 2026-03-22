@@ -63,18 +63,21 @@
         
         /* Sidebar */
         .sidebar {
-            width: var(--sidebar-width);
-            background: var(--bg-primary);
-            border-right: 1px solid var(--border);
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.3s ease;
-            flex-shrink: 0;
-        }
-        
-        .sidebar.hidden {
-            transform: translateX(-100%);
-        }
+    width: var(--sidebar-width);
+    background: var(--bg-primary);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    transition: width 0.3s ease, opacity 0.3s ease;
+    flex-shrink: 0;
+    overflow: hidden;
+}
+
+.sidebar.hidden {
+    width: 0;
+    opacity: 0;
+    border-right: none;
+}
         
         .sidebar-header {
             padding: 16px;
@@ -858,8 +861,19 @@
                 left: 0;
                 top: 0;
                 bottom: 0;
-                z-index: 100;
+                z-index: 200;
                 box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+                width: var(--sidebar-width) !important;
+                opacity: 1 !important;
+                overflow: visible !important;
+                transition: transform 0.3s ease !important;
+                transform: translateX(0);
+            }
+
+            .sidebar.hidden {
+                transform: translateX(-100%) !important;
+                width: var(--sidebar-width) !important;
+                opacity: 1 !important;
             }
             
             .session-info {
@@ -1451,13 +1465,20 @@
             });
         }
         
+        
         // Load theme on startup
         if (localStorage.getItem('theme')) {
             document.body.dataset.theme = localStorage.getItem('theme');
         }
-        
+
+        // On mobile, hide sidebar by default
+        if (window.innerWidth <= 768) {
+            document.getElementById('sidebar').classList.add('hidden');
+        }
+
         // Load history on startup
         loadHistory();
+        
     </script>
 </body>
 </html>
