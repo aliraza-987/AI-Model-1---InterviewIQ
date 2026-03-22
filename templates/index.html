@@ -33,7 +33,9 @@
             --accent-light: #EFF6FF;
             --success: #10B981;
             --warning: #F59E0B;
+            --danger: #EF4444;
             --sidebar-width: 280px;
+            --logo-filter: none;
         }
         
         [data-theme="dark"] {
@@ -46,6 +48,7 @@
             --border: #262626;
             --border-light: #404040;
             --accent-light: #1E3A8A;
+            --logo-filter: brightness(0) invert(1);
         }
         
         html, body {
@@ -60,24 +63,195 @@
         body {
             display: flex;
         }
-        
-        /* Sidebar */
-        .sidebar {
-    width: var(--sidebar-width);
-    background: var(--bg-primary);
-    border-right: 1px solid var(--border);
-    display: flex;
-    flex-direction: column;
-    transition: width 0.3s ease, opacity 0.3s ease;
-    flex-shrink: 0;
-    overflow: hidden;
-}
 
-.sidebar.hidden {
-    width: 0;
-    opacity: 0;
-    border-right: none;
-}
+        /* ── TOAST NOTIFICATION ── */
+        .toast-container {
+            position: fixed;
+            bottom: 100px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+
+        .toast {
+            padding: 12px 20px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 500;
+            color: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            animation: toastIn 0.3s cubic-bezier(0.4,0,0.2,1), toastOut 0.3s cubic-bezier(0.4,0,0.2,1) 2.2s forwards;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            pointer-events: none;
+        }
+
+        .toast.success { background: #10B981; }
+        .toast.info    { background: #3B82F6; }
+        .toast.error   { background: #EF4444; }
+
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateX(40px); }
+            to   { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes toastOut {
+            from { opacity: 1; transform: translateX(0); }
+            to   { opacity: 0; transform: translateX(40px); }
+        }
+
+        /* ── AI PROGRESS BAR ── */
+        .progress-bar-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            z-index: 9998;
+            background: transparent;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .progress-bar-container.active {
+            opacity: 1;
+        }
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), #818CF8, var(--accent));
+            background-size: 200% 100%;
+            animation: progressSlide 1.5s ease-in-out infinite;
+            width: 100%;
+        }
+        @keyframes progressSlide {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ── KEYBOARD SHORTCUTS BADGE ── */
+        .kbd-hint {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            color: var(--text-tertiary);
+        }
+        kbd {
+            display: inline-block;
+            padding: 2px 6px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            color: var(--text-secondary);
+            box-shadow: 0 1px 0 var(--border);
+        }
+        .shortcuts-bar {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            padding: 8px 0 0;
+            justify-content: flex-end;
+        }
+
+        /* ── WORD COUNT ── */
+        .input-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 6px 4px 0;
+        }
+        .word-count {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            transition: color 0.2s;
+        }
+        .word-count.warn { color: var(--warning); }
+        .word-count.danger { color: var(--danger); }
+
+        /* ── QUICK ACTION CHIPS ── */
+        .chips-container {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            padding: 12px 0 4px;
+        }
+        .chip {
+            padding: 6px 14px;
+            border-radius: 20px;
+            border: 1.5px solid var(--border);
+            background: var(--bg-primary);
+            color: var(--text-secondary);
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .chip:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-light);
+            transform: translateY(-1px);
+        }
+
+        /* ── STATS WIDGET ── */
+        .stats-widget {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 40px;
+        }
+        .stat-card {
+            padding: 16px 24px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            text-align: center;
+            min-width: 100px;
+            animation: fadeInUp 0.5s ease both;
+        }
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+        .stat-number {
+            font-size: 26px;
+            font-weight: 700;
+            color: var(--accent);
+            line-height: 1;
+        }
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 4px;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ── SIDEBAR ── */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--bg-primary);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            transition: width 0.3s ease, opacity 0.3s ease;
+            flex-shrink: 0;
+            overflow: hidden;
+        }
+        .sidebar.hidden {
+            width: 0;
+            opacity: 0;
+            border-right: none;
+        }
         
         .sidebar-header {
             padding: 16px;
@@ -101,15 +275,11 @@
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
         }
-        
         .new-chat-btn:hover {
             transform: translateY(-2px);
             box-shadow: 0 4px 16px rgba(59, 130, 246, 0.4);
         }
-        
-        .new-chat-btn:active {
-            transform: translateY(0);
-        }
+        .new-chat-btn:active { transform: translateY(0); }
         
         .sidebar-search {
             padding: 12px 16px;
@@ -126,7 +296,6 @@
             color: var(--text-primary);
             transition: all 0.2s;
         }
-        
         .search-input:focus {
             outline: none;
             border-color: var(--accent);
@@ -138,15 +307,8 @@
             overflow-y: auto;
             padding: 8px;
         }
-        
-        .chat-history::-webkit-scrollbar {
-            width: 6px;
-        }
-        
-        .chat-history::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 3px;
-        }
+        .chat-history::-webkit-scrollbar { width: 6px; }
+        .chat-history::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
         
         .history-item {
             padding: 12px;
@@ -160,24 +322,9 @@
             align-items: center;
             justify-content: space-between;
         }
-        
-        .history-item:hover {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-        }
-        
-        .history-item.active {
-            background: var(--accent-light);
-            color: var(--accent);
-            font-weight: 500;
-        }
-        
-        .history-title {
-            flex: 1;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
+        .history-item:hover { background: var(--bg-secondary); color: var(--text-primary); }
+        .history-item.active { background: var(--accent-light); color: var(--accent); font-weight: 500; }
+        .history-title { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         
         .sidebar-footer {
             padding: 12px 16px;
@@ -185,7 +332,6 @@
             display: flex;
             gap: 8px;
         }
-        
         .footer-btn {
             flex: 1;
             padding: 10px;
@@ -198,13 +344,9 @@
             cursor: pointer;
             transition: all 0.2s;
         }
+        .footer-btn:hover { background: var(--bg-tertiary); transform: translateY(-1px); }
         
-        .footer-btn:hover {
-            background: var(--bg-tertiary);
-            transform: translateY(-1px);
-        }
-        
-        /* Main area */
+        /* ── MAIN AREA ── */
         .main-area {
             flex: 1;
             display: flex;
@@ -213,7 +355,6 @@
             position: relative;
         }
         
-        /* Header - FIXED */
         .header {
             height: 60px;
             background: var(--bg-primary);
@@ -227,12 +368,7 @@
             top: 0;
             z-index: 50;
         }
-        
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
+        .header-left { display: flex; align-items: center; gap: 16px; }
         
         .toggle-sidebar-btn {
             width: 36px;
@@ -248,40 +384,26 @@
             align-items: center;
             justify-content: center;
         }
+        .toggle-sidebar-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); transform: scale(1.05); }
         
-        .toggle-sidebar-btn:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            transform: scale(1.05);
-        }
-        
+        /* ── LOGO DARK MODE FIX ── */
         .logo {
             height: 32px;
+            filter: var(--logo-filter);
+            transition: filter 0.3s ease;
+        }
+        .welcome-logo {
+            height: 64px;
+            margin-bottom: 24px;
+            filter: var(--logo-filter);
+            transition: filter 0.3s ease;
         }
         
-        .session-info {
-            display: flex;
-            gap: 20px;
-            font-size: 13px;
-            color: var(--text-secondary);
-        }
+        .session-info { display: flex; gap: 20px; font-size: 13px; color: var(--text-secondary); }
+        .info-item { display: flex; align-items: center; gap: 6px; }
+        .info-value { font-weight: 600; color: var(--text-primary); }
         
-        .info-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        
-        .info-value {
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-        
-        .header-actions {
-            display: flex;
-            gap: 8px;
-        }
-        
+        .header-actions { display: flex; gap: 8px; }
         .action-btn {
             width: 36px;
             height: 36px;
@@ -296,75 +418,39 @@
             align-items: center;
             justify-content: center;
         }
+        .action-btn:hover { background: var(--bg-tertiary); color: var(--text-primary); transform: scale(1.05); }
+        .action-btn:active { transform: scale(0.95); }
         
-        .action-btn:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-primary);
-            transform: scale(1.05);
-        }
-        
-        .action-btn:active {
-            transform: scale(0.95);
-        }
-        
-        /* Chat container - SCROLLABLE */
-        .chat-container {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-        
-        .messages-container {
-            flex: 1;
-            overflow-y: auto;
-            overflow-x: hidden;
-        }
-        
-        .messages-container::-webkit-scrollbar {
-            width: 8px;
-        }
-        
-        .messages-container::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        
-        .messages-container::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 4px;
-        }
+        /* ── CHAT ── */
+        .chat-container { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .messages-container { flex: 1; overflow-y: auto; overflow-x: hidden; }
+        .messages-container::-webkit-scrollbar { width: 8px; }
+        .messages-container::-webkit-scrollbar-track { background: transparent; }
+        .messages-container::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
         
         .messages-wrapper {
             max-width: 900px;
             margin: 0 auto;
-            padding: 32px 24px 120px;
+            padding: 32px 24px 140px;
             width: 100%;
         }
         
-        /* Welcome */
-        .welcome {
-            text-align: center;
-            padding: 80px 24px;
-        }
-        
-        .welcome-logo {
-            height: 64px;
-            margin-bottom: 24px;
-            opacity: 0.9;
-        }
+        /* ── WELCOME ── */
+        .welcome { text-align: center; padding: 48px 24px 80px; }
         
         .welcome-title {
             font-size: 32px;
             font-weight: 700;
             margin-bottom: 12px;
             letter-spacing: -0.02em;
+            animation: fadeInUp 0.4s ease 0.1s both;
         }
-        
         .welcome-subtitle {
             font-size: 16px;
             color: var(--text-secondary);
-            margin-bottom: 48px;
+            margin-bottom: 36px;
             line-height: 1.6;
+            animation: fadeInUp 0.4s ease 0.2s both;
         }
         
         .interview-grid {
@@ -383,44 +469,22 @@
             cursor: pointer;
             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             text-align: left;
+            animation: fadeInUp 0.4s ease both;
         }
-        
+        .interview-card:nth-child(1) { animation-delay: 0.3s; }
+        .interview-card:nth-child(2) { animation-delay: 0.4s; }
+        .interview-card:nth-child(3) { animation-delay: 0.5s; }
         .interview-card:hover {
             border-color: var(--accent);
             box-shadow: 0 8px 24px rgba(59, 130, 246, 0.15);
             transform: translateY(-4px);
         }
+        .interview-card:active { transform: translateY(-2px); }
+        .card-icon { font-size: 36px; margin-bottom: 16px; display: block; }
+        .card-title { font-size: 17px; font-weight: 600; margin-bottom: 8px; color: var(--text-primary); }
+        .card-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
         
-        .interview-card:active {
-            transform: translateY(-2px);
-        }
-        
-        .card-icon {
-            font-size: 36px;
-            margin-bottom: 16px;
-            display: block;
-        }
-        
-        .card-title {
-            font-size: 17px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--text-primary);
-        }
-        
-        .card-desc {
-            font-size: 14px;
-            color: var(--text-secondary);
-            line-height: 1.6;
-        }
-        
-        /* Difficulty selector */
-        .difficulty-selector {
-            display: flex;
-            gap: 8px;
-            margin-top: 16px;
-        }
-        
+        .difficulty-selector { display: flex; gap: 8px; margin-top: 16px; }
         .diff-btn {
             flex: 1;
             padding: 8px;
@@ -433,34 +497,21 @@
             transition: all 0.2s;
             color: var(--text-secondary);
         }
+        .diff-btn:hover { border-color: var(--accent); color: var(--accent); }
+        .diff-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
         
-        .diff-btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-        }
-        
-        .diff-btn.active {
-            background: var(--accent);
-            border-color: var(--accent);
-            color: white;
-        }
-        
-        /* Messages */
+        /* ── MESSAGES ── */
         .message {
             margin-bottom: 24px;
             display: flex;
             flex-direction: column;
-            animation: fadeIn 0.3s ease;
+            animation: messageSlideIn 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        @keyframes messageSlideIn {
+            from { opacity: 0; transform: translateY(14px) scale(0.98); }
+            to   { opacity: 1; transform: translateY(0) scale(1); }
         }
-        
-        .message.user {
-            align-items: flex-end;
-        }
+        .message.user { align-items: flex-end; }
         
         .msg-header {
             display: flex;
@@ -471,7 +522,6 @@
             font-weight: 500;
             color: var(--text-secondary);
         }
-        
         .msg-avatar {
             width: 26px;
             height: 26px;
@@ -481,15 +531,8 @@
             justify-content: center;
             font-size: 13px;
         }
-        
-        .msg-avatar.user {
-            background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
-            color: white;
-        }
-        
-        .msg-avatar.ai {
-            background: var(--bg-tertiary);
-        }
+        .msg-avatar.user { background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%); color: white; }
+        .msg-avatar.ai { background: var(--bg-tertiary); }
         
         .msg-content {
             max-width: 720px;
@@ -498,67 +541,28 @@
             font-size: 15px;
             line-height: 1.7;
         }
-        
         .message.user .msg-content {
             background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
             color: white;
             box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
         }
-        
-        .message.ai .msg-content {
-            background: var(--bg-secondary);
-            border: 1px solid var(--border);
-        }
-        
-        .msg-content p {
-            margin: 0 0 12px 0;
-        }
-        
-        .msg-content p:last-child {
-            margin: 0;
-        }
-        
-        .msg-content strong {
-            font-weight: 600;
-        }
-        
+        .message.ai .msg-content { background: var(--bg-secondary); border: 1px solid var(--border); }
+        .msg-content p { margin: 0 0 12px 0; }
+        .msg-content p:last-child { margin: 0; }
+        .msg-content strong { font-weight: 600; }
         .msg-content code:not(pre code) {
-            background: rgba(0, 0, 0, 0.08);
+            background: rgba(0,0,0,0.08);
             padding: 3px 7px;
             border-radius: 5px;
             font-family: 'JetBrains Mono', monospace;
             font-size: 13px;
         }
+        .message.user .msg-content code:not(pre code) { background: rgba(255,255,255,0.2); }
+        .msg-content pre { background: #282C34; padding: 16px; border-radius: 10px; overflow-x: auto; margin: 16px 0; }
+        .msg-content pre code { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: #ABB2BF; }
+        .msg-content ul, .msg-content ol { margin: 12px 0; padding-left: 24px; }
         
-        .message.user .msg-content code:not(pre code) {
-            background: rgba(255, 255, 255, 0.2);
-        }
-        
-        .msg-content pre {
-            background: #282C34;
-            padding: 16px;
-            border-radius: 10px;
-            overflow-x: auto;
-            margin: 16px 0;
-        }
-        
-        .msg-content pre code {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 13px;
-            color: #ABB2BF;
-        }
-        
-        .msg-content ul, .msg-content ol {
-            margin: 12px 0;
-            padding-left: 24px;
-        }
-        
-        .msg-actions {
-            display: flex;
-            gap: 6px;
-            margin-top: 8px;
-        }
-        
+        .msg-actions { display: flex; gap: 6px; margin-top: 8px; }
         .msg-action-btn {
             width: 30px;
             height: 30px;
@@ -570,23 +574,11 @@
             font-size: 14px;
             transition: all 0.2s;
         }
+        .msg-action-btn:hover { background: var(--bg-tertiary); color: var(--text-secondary); transform: scale(1.1); }
+        .msg-action-btn.active { color: var(--accent); background: var(--accent-light); }
         
-        .msg-action-btn:hover {
-            background: var(--bg-tertiary);
-            color: var(--text-secondary);
-            transform: scale(1.1);
-        }
-        
-        .msg-action-btn.active {
-            color: var(--accent);
-            background: var(--accent-light);
-        }
-        
-        /* Typing indicator */
-        .typing-indicator {
-            margin-bottom: 24px;
-        }
-        
+        /* ── TYPING INDICATOR ── */
+        .typing-indicator { margin-bottom: 24px; animation: messageSlideIn 0.3s ease; }
         .typing-dots {
             display: flex;
             gap: 5px;
@@ -596,7 +588,6 @@
             border-radius: 16px;
             width: fit-content;
         }
-        
         .typing-dot {
             width: 7px;
             height: 7px;
@@ -604,16 +595,14 @@
             background: var(--text-tertiary);
             animation: pulse 1.4s infinite;
         }
-        
         .typing-dot:nth-child(2) { animation-delay: 0.2s; }
         .typing-dot:nth-child(3) { animation-delay: 0.4s; }
-        
         @keyframes pulse {
             0%, 60%, 100% { opacity: 0.3; transform: scale(1); }
             30% { opacity: 1; transform: scale(1.1); }
         }
         
-        /* Input area - FIXED AT BOTTOM */
+        /* ── INPUT AREA ── */
         .input-section {
             position: sticky;
             bottom: 0;
@@ -621,15 +610,10 @@
             right: 0;
             background: var(--bg-primary);
             border-top: 1px solid var(--border);
-            padding: 20px 24px 24px;
+            padding: 16px 24px 20px;
             z-index: 40;
         }
-        
-        .input-container {
-            max-width: 900px;
-            margin: 0 auto;
-        }
-        
+        .input-container { max-width: 900px; margin: 0 auto; }
         .input-box {
             display: flex;
             align-items: flex-end;
@@ -640,17 +624,8 @@
             padding: 10px;
             transition: all 0.2s;
         }
-        
-        .input-box:focus-within {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 4px var(--accent-light);
-        }
-        
-        .input-tools {
-            display: flex;
-            gap: 4px;
-        }
-        
+        .input-box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-light); }
+        .input-tools { display: flex; gap: 4px; }
         .tool-btn {
             width: 38px;
             height: 38px;
@@ -662,26 +637,10 @@
             font-size: 19px;
             transition: all 0.2s;
         }
-        
-        .tool-btn:hover {
-            background: var(--bg-secondary);
-            color: var(--text-primary);
-            transform: scale(1.1);
-        }
-        
-        .tool-btn:active {
-            transform: scale(0.9);
-        }
-        
-        .tool-btn.recording {
-            color: #EF4444;
-            animation: record 1.5s infinite;
-        }
-        
-        @keyframes record {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
+        .tool-btn:hover { background: var(--bg-secondary); color: var(--text-primary); transform: scale(1.1); }
+        .tool-btn:active { transform: scale(0.9); }
+        .tool-btn.recording { color: #EF4444; animation: record 1.5s infinite; }
+        @keyframes record { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
         
         #userInput {
             flex: 1;
@@ -696,10 +655,7 @@
             padding: 9px;
             line-height: 1.5;
         }
-        
-        #userInput::placeholder {
-            color: var(--text-tertiary);
-        }
+        #userInput::placeholder { color: var(--text-tertiary); }
         
         #sendBtn {
             width: 38px;
@@ -717,42 +673,23 @@
             box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
             flex-shrink: 0;
         }
+        #sendBtn:hover { transform: scale(1.05); box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4); }
+        #sendBtn:active { transform: scale(0.95); }
+        #sendBtn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
         
-        #sendBtn:hover {
-            transform: scale(1.05);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-        }
-        
-        #sendBtn:active {
-            transform: scale(0.95);
-        }
-        
-        #sendBtn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-        
-        /* Settings Modal */
+        /* ── MODALS ── */
         .modal {
             display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.6);
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.6);
             backdrop-filter: blur(4px);
             z-index: 1000;
             justify-content: center;
             align-items: center;
-            animation: fadeIn 0.2s ease;
+            animation: fadeInUp 0.2s ease;
         }
-        
-        .modal.active {
-            display: flex;
-        }
-        
+        .modal.active { display: flex; }
         .modal-content {
             background: var(--bg-primary);
             border-radius: 16px;
@@ -761,39 +698,17 @@
             width: 90%;
             max-height: 80vh;
             overflow-y: auto;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
             animation: slideUp 0.3s ease;
         }
-        
         @keyframes slideUp {
             from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            to   { opacity: 1; transform: translateY(0); }
         }
-        
-        .modal-title {
-            font-size: 22px;
-            font-weight: 700;
-            margin-bottom: 24px;
-        }
-        
-        .setting-group {
-            margin-bottom: 24px;
-        }
-        
-        .setting-label {
-            font-size: 14px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            display: block;
-        }
-        
-        .setting-desc {
-            font-size: 13px;
-            color: var(--text-secondary);
-            margin-bottom: 12px;
-            line-height: 1.5;
-        }
-        
+        .modal-title { font-size: 22px; font-weight: 700; margin-bottom: 24px; }
+        .setting-group { margin-bottom: 24px; }
+        .setting-label { font-size: 14px; font-weight: 600; margin-bottom: 8px; display: block; }
+        .setting-desc { font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; line-height: 1.5; }
         .select-input {
             width: 100%;
             padding: 12px;
@@ -805,19 +720,8 @@
             font-family: 'Inter', sans-serif;
             transition: all 0.2s;
         }
-        
-        .select-input:focus {
-            outline: none;
-            border-color: var(--accent);
-        }
-        
-        .modal-actions {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-            margin-top: 32px;
-        }
-        
+        .select-input:focus { outline: none; border-color: var(--accent); }
+        .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 32px; }
         .modal-btn {
             padding: 12px 24px;
             border-radius: 10px;
@@ -827,82 +731,70 @@
             border: none;
             transition: all 0.2s;
         }
-        
         .modal-btn.primary {
             background: linear-gradient(135deg, var(--accent) 0%, var(--accent-hover) 100%);
             color: white;
-            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+            box-shadow: 0 2px 8px rgba(59,130,246,0.3);
         }
-        
-        .modal-btn.primary:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        .modal-btn.primary:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(59,130,246,0.4); }
+        .modal-btn.secondary { background: var(--bg-secondary); border: 2px solid var(--border); color: var(--text-primary); }
+        .modal-btn.secondary:hover { background: var(--bg-tertiary); }
+
+        /* ── SHORTCUTS MODAL ── */
+        .shortcut-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
         }
+        .shortcut-row:last-child { border-bottom: none; }
+        .shortcut-desc { color: var(--text-secondary); }
+        .shortcut-keys { display: flex; gap: 4px; }
         
-        .modal-btn.secondary {
-            background: var(--bg-secondary);
-            border: 2px solid var(--border);
-            color: var(--text-primary);
-        }
-        
-        .modal-btn.secondary:hover {
-            background: var(--bg-tertiary);
-            border-color: var(--border-light);
-        }
-        
-        /* Mobile responsive */
+        /* ── MOBILE ── */
         @media (max-width: 768px) {
-            :root {
-                --sidebar-width: 260px;
-            }
-            
+            :root { --sidebar-width: 260px; }
             .sidebar {
                 position: fixed;
-                left: 0;
-                top: 0;
-                bottom: 0;
+                left: 0; top: 0; bottom: 0;
                 z-index: 200;
-                box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+                box-shadow: 2px 0 8px rgba(0,0,0,0.15);
                 width: var(--sidebar-width) !important;
                 opacity: 1 !important;
                 overflow: visible !important;
                 transition: transform 0.3s ease !important;
                 transform: translateX(0);
             }
-
             .sidebar.hidden {
                 transform: translateX(-100%) !important;
                 width: var(--sidebar-width) !important;
                 opacity: 1 !important;
             }
-            
-            .session-info {
-                display: none;
-            }
-            
-            .header {
-                padding: 0 16px;
-            }
-            
-            .messages-wrapper {
-                padding: 24px 16px 120px;
-            }
-            
-            .input-section {
-                padding: 16px 16px 20px;
-            }
-            
-            .welcome {
-                padding: 40px 16px;
-            }
-            
-            .interview-grid {
-                grid-template-columns: 1fr;
-            }
+            .session-info { display: none; }
+            .header { padding: 0 16px; }
+            .messages-wrapper { padding: 24px 16px 140px; }
+            .input-section { padding: 12px 16px 16px; }
+            .welcome { padding: 32px 16px 60px; }
+            .interview-grid { grid-template-columns: 1fr; }
+            .stats-widget { gap: 10px; }
+            .stat-card { padding: 12px 16px; }
+            .shortcuts-bar { display: none; }
+            .chips-container { gap: 6px; }
         }
     </style>
 </head>
 <body>
+
+    <!-- Progress Bar -->
+    <div class="progress-bar-container" id="progressBar">
+        <div class="progress-bar"></div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar">
         <div class="sidebar-header">
@@ -911,33 +803,27 @@
                 <span>New Interview</span>
             </button>
         </div>
-        
         <div class="sidebar-search">
             <input type="text" class="search-input" placeholder="🔍 Search history..." id="searchBox" oninput="searchHistory()">
         </div>
-        
         <div class="chat-history" id="chatHistory">
             <div style="padding: 40px 20px; text-align: center; color: var(--text-tertiary); font-size: 14px;">
                 No chat history yet.<br>Start your first interview!
             </div>
         </div>
-        
         <div class="sidebar-footer">
-            <button class="footer-btn" onclick="showSettings()">
-                <span style="font-size: 16px;">⚙️</span>
-            </button>
-            <button class="footer-btn" onclick="toggleTheme()">
-                <span style="font-size: 16px;">🌓</span>
-            </button>
+            <button class="footer-btn" onclick="showSettings()" title="Settings">⚙️</button>
+            <button class="footer-btn" onclick="toggleTheme()" title="Toggle theme">🌓</button>
+            <button class="footer-btn" onclick="showShortcuts()" title="Keyboard shortcuts">⌨️</button>
         </div>
     </div>
     
     <!-- Main Area -->
     <div class="main-area">
-        <!-- Fixed Header -->
+        <!-- Header -->
         <div class="header">
             <div class="header-left">
-                <button class="toggle-sidebar-btn" onclick="toggleSidebar()">☰</button>
+                <button class="toggle-sidebar-btn" onclick="toggleSidebar()" title="Toggle sidebar">☰</button>
                 <img src="/static/logo.png" alt="InterviewIQ" class="logo">
                 <div class="session-info">
                     <div class="info-item">
@@ -954,50 +840,67 @@
                     </div>
                 </div>
             </div>
-            
             <div class="header-actions">
-                <button class="action-btn" onclick="saveInterview()" title="Save Interview">💾</button>
+                <button class="action-btn" onclick="saveInterview()" title="Save Interview (Ctrl+S)">💾</button>
                 <button class="action-btn" onclick="exportTranscript()" title="Export Transcript">📥</button>
                 <button class="action-btn" onclick="showAnalytics()" title="View Analytics">📊</button>
             </div>
         </div>
         
-        <!-- Scrollable Chat Container -->
+        <!-- Chat Container -->
         <div class="chat-container">
             <div class="messages-container" id="messagesContainer">
                 <div class="messages-wrapper" id="chatBox">
                     <div class="welcome" id="welcomeScreen">
                         <img src="/static/logo.png" alt="InterviewIQ" class="welcome-logo">
                         <h1 class="welcome-title">Welcome to InterviewIQ</h1>
-                        <p class="welcome-subtitle">Your AI-powered interview coach available 24/7. Practice coding, behavioral, and system design interviews with instant feedback.</p>
+                        <p class="welcome-subtitle">Your AI-powered interview coach available 24/7.<br>Practice coding, behavioral, and system design interviews with instant feedback.</p>
                         
+                        <!-- Stats Widget -->
+                        <div class="stats-widget" id="statsWidget">
+                            <div class="stat-card">
+                                <div class="stat-number" id="statTotal">—</div>
+                                <div class="stat-label">Total Interviews</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="statTime">—</div>
+                                <div class="stat-label">Minutes Practiced</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="statRating">—</div>
+                                <div class="stat-label">Avg Rating</div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-number" id="statStreak">🔥</div>
+                                <div class="stat-label">Keep Going!</div>
+                            </div>
+                        </div>
+
                         <div class="interview-grid">
                             <div class="interview-card" onclick="startInterview('coding')">
                                 <span class="card-icon">💻</span>
                                 <div class="card-title">Coding Interview</div>
-                                <div class="card-desc">Master algorithms, data structures, and problem-solving</div>
+                                <div class="card-desc">Master algorithms, data structures, and problem-solving with FAANG-level questions</div>
                                 <div class="difficulty-selector">
                                     <button class="diff-btn" onclick="setDiff(event, 'easy')">Easy</button>
                                     <button class="diff-btn active" onclick="setDiff(event, 'medium')">Medium</button>
                                     <button class="diff-btn" onclick="setDiff(event, 'hard')">Hard</button>
                                 </div>
                             </div>
-                            
                             <div class="interview-card" onclick="startInterview('behavioral')">
                                 <span class="card-icon">💬</span>
                                 <div class="card-title">Behavioral Interview</div>
-                                <div class="card-desc">Perfect your STAR method and communication skills</div>
+                                <div class="card-desc">Perfect your STAR method answers and communication skills for any company</div>
                                 <div class="difficulty-selector">
                                     <button class="diff-btn" onclick="setDiff(event, 'easy')">Easy</button>
                                     <button class="diff-btn active" onclick="setDiff(event, 'medium')">Medium</button>
                                     <button class="diff-btn" onclick="setDiff(event, 'hard')">Hard</button>
                                 </div>
                             </div>
-                            
                             <div class="interview-card" onclick="startInterview('system design')">
-                                <span class="card-icon">🏗</span>
+                                <span class="card-icon">🏗️</span>
                                 <div class="card-title">System Design</div>
-                                <div class="card-desc">Design scalable, robust distributed systems</div>
+                                <div class="card-desc">Design scalable, robust distributed systems like a senior engineer</div>
                                 <div class="difficulty-selector">
                                     <button class="diff-btn" onclick="setDiff(event, 'easy')">Easy</button>
                                     <button class="diff-btn active" onclick="setDiff(event, 'medium')">Medium</button>
@@ -1009,16 +912,35 @@
                 </div>
             </div>
             
-            <!-- Fixed Input Area -->
+            <!-- Input Area -->
             <div class="input-section">
                 <div class="input-container">
+                    <!-- Quick Action Chips -->
+                    <div class="chips-container" id="chipsContainer" style="display:none;">
+                        <span class="chip" onclick="useChip('Hint please')">💡 Hint</span>
+                        <span class="chip" onclick="useChip('Can you explain that differently?')">🔄 Explain differently</span>
+                        <span class="chip" onclick="useChip('What is the time complexity?')">⏱ Time complexity</span>
+                        <span class="chip" onclick="useChip('Give me a simpler example')">📘 Simpler example</span>
+                        <span class="chip" onclick="useChip('Next question please')">➡️ Next question</span>
+                    </div>
+
                     <div class="input-box">
                         <div class="input-tools">
-                            <button class="tool-btn" id="voiceBtn" onclick="toggleVoice()" title="Voice input">🎤</button>
-                            <button class="tool-btn" onclick="clearInput()" title="Clear">🗑️</button>
+                            <button class="tool-btn" id="voiceBtn" onclick="toggleVoice()" title="Voice input (Ctrl+M)">🎤</button>
+                            <button class="tool-btn" onclick="clearInput()" title="Clear input">🗑️</button>
                         </div>
-                        <textarea id="userInput" placeholder="Type your message..." rows="1"></textarea>
-                        <button id="sendBtn" onclick="sendMessage()">↑</button>
+                        <textarea id="userInput" placeholder="Type your answer or ask a question..." rows="1"></textarea>
+                        <button id="sendBtn" onclick="sendMessage()" title="Send (Enter)">↑</button>
+                    </div>
+
+                    <div class="input-footer">
+                        <div class="shortcuts-bar">
+                            <span class="kbd-hint"><kbd>Enter</kbd> send</span>
+                            <span class="kbd-hint"><kbd>Shift</kbd>+<kbd>Enter</kbd> new line</span>
+                            <span class="kbd-hint"><kbd>Ctrl</kbd>+<kbd>S</kbd> save</span>
+                            <span class="kbd-hint"><kbd>Ctrl</kbd>+<kbd>M</kbd> voice</span>
+                        </div>
+                        <div class="word-count" id="wordCount">0 words</div>
                     </div>
                 </div>
             </div>
@@ -1029,27 +951,24 @@
     <div class="modal" id="settingsModal" onclick="closeModalOnOutsideClick(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
             <h2 class="modal-title">⚙️ Settings</h2>
-            
             <div class="setting-group">
                 <label class="setting-label">Default Difficulty Level</label>
                 <div class="setting-desc">Set your preferred interview question difficulty</div>
                 <select class="select-input" id="difficultySelect">
-                    <option value="easy">Easy - Beginner friendly</option>
-                    <option value="medium" selected>Medium - Intermediate level</option>
-                    <option value="hard">Hard - Advanced challenges</option>
+                    <option value="easy">Easy — Beginner friendly</option>
+                    <option value="medium" selected>Medium — Intermediate level</option>
+                    <option value="hard">Hard — Advanced challenges</option>
                 </select>
             </div>
-            
             <div class="setting-group">
                 <label class="setting-label">Response Speed</label>
-                <div class="setting-desc">Adjust AI typing speed</div>
+                <div class="setting-desc">Adjust how fast the AI types its response</div>
                 <select class="select-input" id="speedSelect">
                     <option value="0.01">Fast</option>
                     <option value="0.02" selected>Normal</option>
                     <option value="0.04">Slow</option>
                 </select>
             </div>
-            
             <div class="modal-actions">
                 <button class="modal-btn secondary" onclick="closeSettings()">Cancel</button>
                 <button class="modal-btn primary" onclick="saveSettings()">Save Changes</button>
@@ -1062,12 +981,48 @@
         <div class="modal-content" onclick="event.stopPropagation()">
             <h2 class="modal-title">📊 Your Statistics</h2>
             <div id="analyticsContent">
-                <div style="padding: 40px; text-align: center; color: var(--text-secondary);">
-                    Loading statistics...
-                </div>
+                <div style="padding: 40px; text-align: center; color: var(--text-secondary);">Loading statistics...</div>
             </div>
             <div class="modal-actions">
                 <button class="modal-btn primary" onclick="closeAnalytics()">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Keyboard Shortcuts Modal -->
+    <div class="modal" id="shortcutsModal" onclick="closeModalOnOutsideClick(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h2 class="modal-title">⌨️ Keyboard Shortcuts</h2>
+            <div class="shortcut-row">
+                <span class="shortcut-desc">Send message</span>
+                <div class="shortcut-keys"><kbd>Enter</kbd></div>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-desc">New line in message</span>
+                <div class="shortcut-keys"><kbd>Shift</kbd><kbd>Enter</kbd></div>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-desc">Save interview</span>
+                <div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>S</kbd></div>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-desc">Toggle voice input</span>
+                <div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>M</kbd></div>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-desc">Toggle sidebar</span>
+                <div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>B</kbd></div>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-desc">Toggle dark mode</span>
+                <div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>D</kbd></div>
+            </div>
+            <div class="shortcut-row">
+                <span class="shortcut-desc">New interview</span>
+                <div class="shortcut-keys"><kbd>Ctrl</kbd><kbd>N</kbd></div>
+            </div>
+            <div class="modal-actions">
+                <button class="modal-btn primary" onclick="closeShortcuts()">Got it!</button>
             </div>
         </div>
     </div>
@@ -1089,20 +1044,73 @@
         let selectedDifficulty = 'medium';
         let recognition = null;
         let isRecording = false;
+        let interviewStarted = false;
         
-        // Speech recognition
+        // ── TOAST ──
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            const icons = { success: '✅', info: 'ℹ️', error: '❌' };
+            toast.innerHTML = `<span>${icons[type]}</span><span>${message}</span>`;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 2600);
+        }
+
+        // ── PROGRESS BAR ──
+        function showProgress() {
+            document.getElementById('progressBar').classList.add('active');
+        }
+        function hideProgress() {
+            document.getElementById('progressBar').classList.remove('active');
+        }
+
+        // ── WORD COUNT ──
+        function updateWordCount(text) {
+            const words = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+            const el = document.getElementById('wordCount');
+            el.textContent = `${words} word${words !== 1 ? 's' : ''}`;
+            el.className = 'word-count';
+            if (words > 200) el.classList.add('danger');
+            else if (words > 120) el.classList.add('warn');
+        }
+
+        // ── CHIPS ──
+        function useChip(text) {
+            const input = document.getElementById('userInput');
+            input.value = text;
+            input.focus();
+            updateWordCount(text);
+        }
+
+        // ── LOAD WELCOME STATS ──
+        async function loadWelcomeStats() {
+            try {
+                const res = await fetch('/analytics');
+                const data = await res.json();
+                document.getElementById('statTotal').textContent = data.total_interviews || 0;
+                document.getElementById('statTime').textContent = data.total_time_minutes || 0;
+                document.getElementById('statRating').textContent = data.avg_rating ? data.avg_rating.toFixed(1) + '⭐' : '—';
+            } catch (e) {
+                // silently fail — stats widget not critical
+            }
+        }
+
+        // ── SPEECH RECOGNITION ──
         if ('webkitSpeechRecognition' in window) {
             recognition = new webkitSpeechRecognition();
             recognition.continuous = false;
             recognition.onresult = (e) => {
-                document.getElementById('userInput').value = e.results[0][0].transcript;
+                const text = e.results[0][0].transcript;
+                document.getElementById('userInput').value = text;
+                updateWordCount(text);
                 stopVoice();
             };
             recognition.onerror = stopVoice;
             recognition.onend = stopVoice;
         }
         
-        // Session timer
+        // ── SESSION TIMER ──
         setInterval(() => {
             const elapsed = Math.floor((Date.now() - sessionStartTime) / 1000);
             const m = Math.floor(elapsed / 60);
@@ -1110,26 +1118,51 @@
             document.getElementById('sessionTime').textContent = `${m}:${s.toString().padStart(2, '0')}`;
         }, 1000);
         
-        // Auto-resize textarea
+        // ── TEXTAREA ──
         const textarea = document.getElementById('userInput');
         textarea.addEventListener('input', function() {
             this.style.height = 'auto';
             this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+            updateWordCount(this.value);
         });
-        
-        // Enter to send
         textarea.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
                 sendMessage();
             }
         });
+
+        // ── GLOBAL KEYBOARD SHORTCUTS ──
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key.toLowerCase()) {
+                    case 's':
+                        e.preventDefault();
+                        saveInterview();
+                        break;
+                    case 'm':
+                        e.preventDefault();
+                        toggleVoice();
+                        break;
+                    case 'b':
+                        e.preventDefault();
+                        toggleSidebar();
+                        break;
+                    case 'd':
+                        e.preventDefault();
+                        toggleTheme();
+                        break;
+                    case 'n':
+                        e.preventDefault();
+                        newChat();
+                        break;
+                }
+            }
+        });
         
         function setDiff(event, difficulty) {
             event.stopPropagation();
             selectedDifficulty = difficulty;
-            
-            // Update all difficulty buttons in the card
             const card = event.target.closest('.interview-card');
             card.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('active'));
             event.target.classList.add('active');
@@ -1139,8 +1172,9 @@
             document.getElementById('welcomeScreen').remove();
             document.getElementById('typeDisplay').style.display = 'flex';
             document.getElementById('interviewType').textContent = type.charAt(0).toUpperCase() + type.slice(1);
-            
-            // Send difficulty setting
+            document.getElementById('chipsContainer').style.display = 'flex';
+            interviewStarted = true;
+
             fetch('/set_difficulty', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -1162,12 +1196,14 @@
             addMessage(msg, 'user');
             input.value = '';
             input.style.height = 'auto';
+            updateWordCount('');
             
             await sendToAI(msg);
         }
         
         async function sendToAI(msg) {
             showTyping();
+            showProgress();
             
             try {
                 const response = await fetch('/interview_stream', {
@@ -1192,51 +1228,54 @@
                     
                     for (const line of lines) {
                         if (line.startsWith('data: ')) {
-                            const data = JSON.parse(line.slice(6));
-                            
-                            if (data.content) {
-                                streamedContent += data.content;
+                            try {
+                                const data = JSON.parse(line.slice(6));
                                 
-                                if (!messageElement) {
-                                    const chatBox = document.getElementById('chatBox');
-                                    const msg = document.createElement('div');
-                                    msg.className = 'message ai';
+                                if (data.content) {
+                                    streamedContent += data.content;
                                     
-                                    msg.innerHTML = `
-                                        <div class="msg-header">
-                                            <div class="msg-avatar ai">🤖</div>
-                                            <span>Interviewer</span>
-                                        </div>
-                                        <div class="msg-content" id="streaming-msg"></div>
-                                    `;
+                                    if (!messageElement) {
+                                        const chatBox = document.getElementById('chatBox');
+                                        const msgDiv = document.createElement('div');
+                                        msgDiv.className = 'message ai';
+                                        msgDiv.innerHTML = `
+                                            <div class="msg-header">
+                                                <div class="msg-avatar ai">🤖</div>
+                                                <span>Interviewer</span>
+                                            </div>
+                                            <div class="msg-content" id="streaming-msg"></div>
+                                        `;
+                                        chatBox.appendChild(msgDiv);
+                                        messageElement = document.getElementById('streaming-msg');
+                                    }
                                     
-                                    chatBox.appendChild(msg);
-                                    messageElement = document.getElementById('streaming-msg');
+                                    messageElement.innerHTML = marked.parse(streamedContent);
+                                    scrollToBottom();
                                 }
                                 
-                                messageElement.innerHTML = marked.parse(streamedContent);
-                                scrollToBottom();
-                            }
-                            
-                            if (data.done && messageElement) {
-                                const parent = messageElement.parentElement;
-                                const actions = document.createElement('div');
-                                actions.className = 'msg-actions';
-                                actions.innerHTML = `
-                                    <button class="msg-action-btn" onclick="copyMessage(this)" title="Copy">📋</button>
-                                    <button class="msg-action-btn" onclick="feedback(this, 'up')" title="Good">👍</button>
-                                    <button class="msg-action-btn" onclick="feedback(this, 'down')" title="Bad">👎</button>
-                                `;
-                                parent.appendChild(actions);
-                                messageElement.id = '';
-                            }
+                                if (data.done && messageElement) {
+                                    hideProgress();
+                                    const parent = messageElement.parentElement;
+                                    const actions = document.createElement('div');
+                                    actions.className = 'msg-actions';
+                                    actions.innerHTML = `
+                                        <button class="msg-action-btn" onclick="copyMessage(this)" title="Copy response">📋</button>
+                                        <button class="msg-action-btn" onclick="feedback(this, 'up')" title="Good response">👍</button>
+                                        <button class="msg-action-btn" onclick="feedback(this, 'down')" title="Bad response">👎</button>
+                                    `;
+                                    parent.appendChild(actions);
+                                    messageElement.id = '';
+                                }
+                            } catch(parseErr) {}
                         }
                     }
                 }
                 
             } catch (error) {
                 hideTyping();
+                hideProgress();
                 addMessage('❌ Connection error. Please try again.', 'ai');
+                showToast('Connection error. Please try again.', 'error');
             }
         }
         
@@ -1244,10 +1283,8 @@
             const chatBox = document.getElementById('chatBox');
             const msg = document.createElement('div');
             msg.className = `message ${role}`;
-            
             const avatar = role === 'user' ? '👤' : '🤖';
             const name = role === 'user' ? 'You' : 'Interviewer';
-            
             msg.innerHTML = `
                 <div class="msg-header">
                     <div class="msg-avatar ${role}">${avatar}</div>
@@ -1255,7 +1292,6 @@
                 </div>
                 <div class="msg-content">${text}</div>
             `;
-            
             chatBox.appendChild(msg);
             scrollToBottom();
         }
@@ -1292,29 +1328,36 @@
         
         function copyMessage(btn) {
             const msgContent = btn.closest('.message').querySelector('.msg-content').textContent;
-            navigator.clipboard.writeText(msgContent);
-            btn.textContent = '✅';
-            setTimeout(() => btn.textContent = '📋', 2000);
+            navigator.clipboard.writeText(msgContent).then(() => {
+                btn.textContent = '✅';
+                showToast('Copied to clipboard!', 'success');
+                setTimeout(() => btn.textContent = '📋', 2000);
+            }).catch(() => {
+                showToast('Could not copy text', 'error');
+            });
         }
         
         function feedback(btn, type) {
             btn.classList.add('active');
             btn.disabled = true;
+            showToast(type === 'up' ? 'Thanks for the feedback! 🎉' : 'Got it, we\'ll improve!', type === 'up' ? 'success' : 'info');
         }
         
         function clearInput() {
             document.getElementById('userInput').value = '';
             document.getElementById('userInput').style.height = 'auto';
+            updateWordCount('');
         }
         
         function toggleVoice() {
-            if (!recognition) return alert('❌ Voice not supported in your browser');
+            if (!recognition) return showToast('Voice not supported in your browser', 'error');
             if (isRecording) {
                 stopVoice();
             } else {
                 isRecording = true;
                 document.getElementById('voiceBtn').classList.add('recording');
                 recognition.start();
+                showToast('Listening... speak now 🎤', 'info');
             }
         }
         
@@ -1340,62 +1383,68 @@
             localStorage.setItem('theme', newTheme);
         }
         
-        function showSettings() {
-            document.getElementById('settingsModal').classList.add('active');
-        }
-        
-        function closeSettings() {
-            document.getElementById('settingsModal').classList.remove('active');
-        }
+        function showSettings() { document.getElementById('settingsModal').classList.add('active'); }
+        function closeSettings() { document.getElementById('settingsModal').classList.remove('active'); }
         
         function saveSettings() {
             selectedDifficulty = document.getElementById('difficultySelect').value;
-            
             fetch('/set_difficulty', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ difficulty: selectedDifficulty })
             });
-            
             closeSettings();
-            alert('✅ Settings saved successfully!');
+            showToast('Settings saved!', 'success');
         }
         
         async function showAnalytics() {
             document.getElementById('analyticsModal').classList.add('active');
-            
             try {
                 const res = await fetch('/analytics');
                 const data = await res.json();
-                
                 document.getElementById('analyticsContent').innerHTML = `
-                    <div style="display: grid; gap: 20px;">
-                        <div style="padding: 20px; background: var(--bg-secondary); border-radius: 12px;">
-                            <div style="font-size: 32px; font-weight: 700; color: var(--accent);">${data.total_interviews}</div>
-                            <div style="color: var(--text-secondary); margin-top: 4px;">Total Interviews</div>
+                    <div style="display: grid; gap: 16px;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                            <div style="padding: 20px; background: var(--bg-secondary); border-radius: 12px; text-align:center;">
+                                <div style="font-size: 32px; font-weight: 700; color: var(--accent);">${data.total_interviews}</div>
+                                <div style="color: var(--text-secondary); margin-top: 4px; font-size:13px;">Total Interviews</div>
+                            </div>
+                            <div style="padding: 20px; background: var(--bg-secondary); border-radius: 12px; text-align:center;">
+                                <div style="font-size: 32px; font-weight: 700; color: var(--success);">${data.total_time_minutes}</div>
+                                <div style="color: var(--text-secondary); margin-top: 4px; font-size:13px;">Minutes Practiced</div>
+                            </div>
+                            <div style="padding: 20px; background: var(--bg-secondary); border-radius: 12px; text-align:center;">
+                                <div style="font-size: 32px; font-weight: 700; color: var(--warning);">${data.avg_rating ? data.avg_rating.toFixed(1) : '—'} ⭐</div>
+                                <div style="color: var(--text-secondary); margin-top: 4px; font-size:13px;">Average Rating</div>
+                            </div>
+                            <div style="padding: 20px; background: var(--bg-secondary); border-radius: 12px; text-align:center;">
+                                <div style="font-size: 32px; font-weight: 700; color: var(--accent);">${data.avg_duration_minutes || 0}</div>
+                                <div style="color: var(--text-secondary); margin-top: 4px; font-size:13px;">Avg Duration (min)</div>
+                            </div>
                         </div>
-                        <div style="padding: 20px; background: var(--bg-secondary); border-radius: 12px;">
-                            <div style="font-size: 32px; font-weight: 700; color: var(--success);">${data.total_time_minutes} min</div>
-                            <div style="color: var(--text-secondary); margin-top: 4px;">Practice Time</div>
-                        </div>
-                        <div style="padding: 20px; background: var(--bg-secondary); border-radius: 12px;">
-                            <div style="font-size: 32px; font-weight: 700; color: var(--warning);">${data.avg_rating.toFixed(1)} ⭐</div>
-                            <div style="color: var(--text-secondary); margin-top: 4px;">Average Rating</div>
-                        </div>
+                        ${Object.keys(data.by_type || {}).length ? `
+                        <div style="padding: 16px; background: var(--bg-secondary); border-radius: 12px;">
+                            <div style="font-weight: 600; margin-bottom: 12px; font-size:14px;">By Interview Type</div>
+                            ${Object.entries(data.by_type).map(([k,v]) => `
+                                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:14px;">
+                                    <span style="color:var(--text-secondary); text-transform:capitalize;">${k}</span>
+                                    <span style="font-weight:600;">${v}</span>
+                                </div>
+                            `).join('')}
+                        </div>` : ''}
                     </div>
                 `;
             } catch (error) {
                 document.getElementById('analyticsContent').innerHTML = `
-                    <div style="padding: 40px; text-align: center; color: var(--text-secondary);">
-                        ❌ Failed to load statistics
-                    </div>
+                    <div style="padding: 40px; text-align: center; color: var(--text-secondary);">❌ Failed to load statistics</div>
                 `;
             }
         }
         
-        function closeAnalytics() {
-            document.getElementById('analyticsModal').classList.remove('active');
-        }
+        function closeAnalytics() { document.getElementById('analyticsModal').classList.remove('active'); }
+
+        function showShortcuts() { document.getElementById('shortcutsModal').classList.add('active'); }
+        function closeShortcuts() { document.getElementById('shortcutsModal').classList.remove('active'); }
         
         function closeModalOnOutsideClick(event) {
             if (event.target.classList.contains('modal')) {
@@ -1406,16 +1455,16 @@
         async function saveInterview() {
             const rating = prompt('⭐ Rate this interview (1-5):');
             if (!rating || rating < 1 || rating > 5) return;
-            
             const res = await fetch('/save_interview', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ rating: parseInt(rating) })
             });
-            
             if (res.ok) {
-                alert('✅ Interview saved successfully!');
+                showToast('Interview saved successfully!', 'success');
                 loadHistory();
+            } else {
+                showToast('Failed to save interview', 'error');
             }
         }
         
@@ -1427,24 +1476,21 @@
             a.href = url;
             a.download = `InterviewIQ_${Date.now()}.txt`;
             a.click();
+            showToast('Transcript exported!', 'success');
         }
         
         async function loadHistory() {
             try {
                 const res = await fetch('/get_history');
                 const data = await res.json();
-                
                 const historyEl = document.getElementById('chatHistory');
-                
                 if (data.history && data.history.length > 0) {
                     historyEl.innerHTML = '';
                     data.history.forEach(chat => {
                         const date = new Date(chat.date).toLocaleDateString();
                         const item = document.createElement('div');
                         item.className = 'history-item';
-                        item.innerHTML = `
-                            <div class="history-title">${chat.type} - ${date}</div>
-                        `;
+                        item.innerHTML = `<div class="history-title">${chat.type} · ${chat.difficulty} · ${date}</div>`;
                         historyEl.appendChild(item);
                     });
                 } else {
@@ -1458,27 +1504,20 @@
         function searchHistory() {
             const query = document.getElementById('searchBox').value.toLowerCase();
             const items = document.querySelectorAll('.history-item');
-            
             items.forEach(item => {
-                const text = item.textContent.toLowerCase();
-                item.style.display = text.includes(query) ? 'flex' : 'none';
+                item.style.display = item.textContent.toLowerCase().includes(query) ? 'flex' : 'none';
             });
         }
         
-        
-        // Load theme on startup
+        // ── STARTUP ──
         if (localStorage.getItem('theme')) {
             document.body.dataset.theme = localStorage.getItem('theme');
         }
-
-        // On mobile, hide sidebar by default
         if (window.innerWidth <= 768) {
             document.getElementById('sidebar').classList.add('hidden');
         }
-
-        // Load history on startup
         loadHistory();
-        
+        loadWelcomeStats();
     </script>
 </body>
 </html>
