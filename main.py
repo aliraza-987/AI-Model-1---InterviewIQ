@@ -397,5 +397,22 @@ def set_difficulty():
 
 if __name__ == '__main__':
     import os
+    import threading
+    import requests
+    import time
+
+    def keep_alive():
+        while True:
+            time.sleep(600)  # every 10 minutes
+            try:
+                url = os.environ.get('RENDER_EXTERNAL_URL', 'https://interviewiq-83bs.onrender.com')
+                requests.get(url)
+                print("Keep-alive ping sent")
+            except:
+                pass
+
+    t = threading.Thread(target=keep_alive, daemon=True)
+    t.start()
+
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
