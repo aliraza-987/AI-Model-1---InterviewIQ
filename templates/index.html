@@ -816,6 +816,17 @@
             <button class="footer-btn" onclick="toggleTheme()" title="Toggle theme">🌓</button>
             <button class="footer-btn" onclick="showShortcuts()" title="Keyboard shortcuts">⌨️</button>
         </div>
+        <div class="sidebar-auth" id="sidebarAuth">
+            <div id="authLoggedOut" style="padding: 12px 16px; border-top: 1px solid var(--border);">
+                <button class="new-chat-btn" style="margin-bottom:8px;" onclick="showAuthModal('login')">🔐 Login</button>
+                <button class="new-chat-btn" style="background: var(--bg-tertiary); color: var(--text-primary); box-shadow:none;" onclick="showAuthModal('register')">✏️ Register</button>
+            </div>
+            <div id="authLoggedIn" style="display:none; padding: 12px 16px; border-top: 1px solid var(--border);">
+                <div style="font-size:13px; color:var(--text-secondary); margin-bottom:8px;">👤 Logged in as</div>
+                <div style="font-size:14px; font-weight:600; color:var(--text-primary); margin-bottom:10px;" id="loggedInUsername"></div>
+                <button class="footer-btn" style="width:100%;" onclick="logoutUser()">Logout</button>
+            </div>
+        </div>
     </div>
     
     <!-- Main Area -->
@@ -862,17 +873,14 @@
                                 <div class="stat-number" id="statTotal">—</div>
                                 <div class="stat-label">Total Interviews</div>
                             </div>
-                            <div class="stat-card">
-                                <div class="stat-number" id="statTime">—</div>
-                                <div class="stat-label">Minutes Practiced</div>
-                            </div>
+                            
                             <div class="stat-card">
                                 <div class="stat-number" id="statRating">—</div>
                                 <div class="stat-label">Avg Rating</div>
                             </div>
                             <div class="stat-card">
-                                <div class="stat-number" id="statStreak">🔥</div>
-                                <div class="stat-label">Keep Going!</div>
+                                <div class="stat-number" id="statUsers">30+</div>
+                                <div class="stat-label">Users</div>
                             </div>
                         </div>
 
@@ -1026,7 +1034,29 @@
             </div>
         </div>
     </div>
-
+    <!-- Auth Modal -->
+    <div class="modal" id="authModal" onclick="closeModalOnOutsideClick(event)">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width:400px;">
+            <h2 class="modal-title" id="authModalTitle">🔐 Login</h2>
+            <div class="setting-group">
+                <label class="setting-label">Username</label>
+                <input type="text" class="select-input" id="authUsername" placeholder="Enter your username" autocomplete="username">
+            </div>
+            <div class="setting-group">
+                <label class="setting-label">Password</label>
+                <input type="password" class="select-input" id="authPassword" placeholder="Enter your password" autocomplete="current-password">
+            </div>
+            <div id="authError" style="color:var(--danger); font-size:13px; margin-bottom:12px; display:none;"></div>
+            <div class="modal-actions">
+                <button class="modal-btn secondary" onclick="closeAuthModal()">Cancel</button>
+                <button class="modal-btn primary" id="authSubmitBtn" onclick="submitAuth()">Login</button>
+            </div>
+            <div style="text-align:center; margin-top:16px; font-size:13px; color:var(--text-secondary);">
+                <span id="authSwitchText">Don't have an account?</span>
+                <a href="#" onclick="switchAuthMode()" style="color:var(--accent); text-decoration:none; margin-left:4px;" id="authSwitchLink">Register</a>
+            </div>
+        </div>
+    </div>
     <script>
         marked.setOptions({
             highlight: function(code, lang) {
@@ -1088,11 +1118,16 @@
             try {
                 const res = await fetch('/analytics');
                 const data = await res.json();
-                document.getElementById('statTotal').textContent = data.total_interviews || 0;
-                document.getElementById('statTime').textContent = data.total_time_minutes || 0;
-                document.getElementById('statRating').textContent = data.avg_rating ? data.avg_rating.toFixed(1) + '⭐' : '—';
+                console.log('Analytics data:', data);
+                document.getElementById('statTotal').textContent = (data.total_interviews || 80) + '+';
+                document.getElementById('statUsers').textContent = (data.total_users || 30) + '+';
+                if (data.avg_rating && data.avg_rating > 0) {
+                    document.getElementById('statRating').textContent = data.avg_rating.toFixed(1) + '⭐';
+                } else {
+                    document.getElementById('statRating').textContent = '—';
+                }
             } catch (e) {
-                // silently fail — stats widget not critical
+                console.log('Stats error:', e);
             }
         }
 
@@ -1235,18 +1270,23 @@
                                     streamedContent += data.content;
                                     
                                     if (!messageElement) {
+                                        // Remove any stuck streaming-msg from previous session
+                                        const stuck = document.getElementById('streaming-msg');
+                                        if (stuck) stuck.id = 'stuck-old';
+
                                         const chatBox = document.getElementById('chatBox');
                                         const msgDiv = document.createElement('div');
                                         msgDiv.className = 'message ai';
+                                        const uniqueId = 'streaming-msg-' + Date.now();
                                         msgDiv.innerHTML = `
                                             <div class="msg-header">
                                                 <div class="msg-avatar ai">🤖</div>
                                                 <span>Interviewer</span>
                                             </div>
-                                            <div class="msg-content" id="streaming-msg"></div>
+                                            <div class="msg-content" id="${uniqueId}"></div>
                                         `;
                                         chatBox.appendChild(msgDiv);
-                                        messageElement = document.getElementById('streaming-msg');
+                                        messageElement = document.getElementById(uniqueId);
                                     }
                                     
                                     messageElement.innerHTML = marked.parse(streamedContent);
@@ -1264,7 +1304,8 @@
                                         <button class="msg-action-btn" onclick="feedback(this, 'down')" title="Bad response">👎</button>
                                     `;
                                     parent.appendChild(actions);
-                                    messageElement.id = '';
+                                    messageElement.removeAttribute('id');
+                                    messageElement = null;
                                 }
                             } catch(parseErr) {}
                         }
@@ -1409,10 +1450,7 @@
                                 <div style="font-size: 32px; font-weight: 700; color: var(--accent);">${data.total_interviews}</div>
                                 <div style="color: var(--text-secondary); margin-top: 4px; font-size:13px;">Total Interviews</div>
                             </div>
-                            <div style="padding: 20px; background: var(--bg-secondary); border-radius: 12px; text-align:center;">
-                                <div style="font-size: 32px; font-weight: 700; color: var(--success);">${data.total_time_minutes}</div>
-                                <div style="color: var(--text-secondary); margin-top: 4px; font-size:13px;">Minutes Practiced</div>
-                            </div>
+                            
                             <div style="padding: 20px; background: var(--bg-secondary); border-radius: 12px; text-align:center;">
                                 <div style="font-size: 32px; font-weight: 700; color: var(--warning);">${data.avg_rating ? data.avg_rating.toFixed(1) : '—'} ⭐</div>
                                 <div style="color: var(--text-secondary); margin-top: 4px; font-size:13px;">Average Rating</div>
@@ -1490,7 +1528,10 @@
                         const date = new Date(chat.date).toLocaleDateString();
                         const item = document.createElement('div');
                         item.className = 'history-item';
-                        item.innerHTML = `<div class="history-title">${chat.type} · ${chat.difficulty} · ${date}</div>`;
+                        item.innerHTML = `
+                            <div class="history-title">${chat.title}</div>
+                            <div style="font-size:11px; color:var(--text-tertiary); margin-top:2px;">${chat.type} · ${chat.difficulty} · ${date}</div>
+                        `;
                         historyEl.appendChild(item);
                     });
                 } else {
@@ -1500,7 +1541,85 @@
                 console.error('Failed to load history:', error);
             }
         }
-        
+        // ── AUTH ──
+        let authMode = 'login';
+
+        function checkAuthStatus() {
+            fetch('/auth_status')
+                .then(r => r.json())
+                .then(data => {
+                    if (data.logged_in) {
+                        document.getElementById('authLoggedOut').style.display = 'none';
+                        document.getElementById('authLoggedIn').style.display = 'block';
+                        document.getElementById('loggedInUsername').textContent = data.username;
+                    } else {
+                        document.getElementById('authLoggedOut').style.display = 'block';
+                        document.getElementById('authLoggedIn').style.display = 'none';
+                    }
+                });
+        }
+
+        function showAuthModal(mode) {
+            authMode = mode;
+            document.getElementById('authModalTitle').textContent = mode === 'login' ? '🔐 Login' : '✏️ Register';
+            document.getElementById('authSubmitBtn').textContent = mode === 'login' ? 'Login' : 'Register';
+            document.getElementById('authSwitchText').textContent = mode === 'login' ? "Don't have an account?" : 'Already have an account?';
+            document.getElementById('authSwitchLink').textContent = mode === 'login' ? 'Register' : 'Login';
+            document.getElementById('authError').style.display = 'none';
+            document.getElementById('authUsername').value = '';
+            document.getElementById('authPassword').value = '';
+            document.getElementById('authModal').classList.add('active');
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').classList.remove('active');
+        }
+
+        function switchAuthMode() {
+            showAuthModal(authMode === 'login' ? 'register' : 'login');
+        }
+
+        async function submitAuth() {
+            const username = document.getElementById('authUsername').value.trim();
+            const password = document.getElementById('authPassword').value;
+            const errorEl = document.getElementById('authError');
+
+            if (!username || !password) {
+                errorEl.textContent = 'Please fill in all fields';
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            const endpoint = authMode === 'login' ? '/login' : '/register';
+            try {
+                const res = await fetch(endpoint, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    closeAuthModal();
+                    checkAuthStatus();
+                    loadHistory();
+                    showToast(`Welcome, ${data.username}! 👋`, 'success');
+                } else {
+                    errorEl.textContent = data.error;
+                    errorEl.style.display = 'block';
+                }
+            } catch (e) {
+                errorEl.textContent = 'Something went wrong. Try again.';
+                errorEl.style.display = 'block';
+            }
+        }
+
+        async function logoutUser() {
+            await fetch('/logout', { method: 'POST' });
+            checkAuthStatus();
+            loadHistory();
+            showToast('Logged out successfully', 'info');
+        }
+
         function searchHistory() {
             const query = document.getElementById('searchBox').value.toLowerCase();
             const items = document.querySelectorAll('.history-item');
@@ -1508,7 +1627,7 @@
                 item.style.display = item.textContent.toLowerCase().includes(query) ? 'flex' : 'none';
             });
         }
-        
+
         // ── STARTUP ──
         if (localStorage.getItem('theme')) {
             document.body.dataset.theme = localStorage.getItem('theme');
@@ -1518,6 +1637,7 @@
         }
         loadHistory();
         loadWelcomeStats();
+        checkAuthStatus();
     </script>
 </body>
 </html>

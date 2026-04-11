@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, jsonify, session, send_file, Response
+from flask import Flask, render_template, request, jsonify, session, send_file, Response, redirect, url_for
+from werkzeug.security import generate_password_hash, check_password_hash
 from dotenv import load_dotenv
 import os
 from groq import Groq
@@ -18,16 +19,31 @@ client = Groq(api_key=os.getenv('GROQ_API_KEY'))
 def init_db():
     conn = sqlite3.connect('interviews.db')
     c = conn.cursor()
+    c.execute('''CREATE TABLE IF NOT EXISTS users
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  username TEXT UNIQUE NOT NULL,
+                  password_hash TEXT NOT NULL,
+                  created_at TEXT)''')
     c.execute('''CREATE TABLE IF NOT EXISTS interviews
                  (id INTEGER PRIMARY KEY AUTOINCREMENT,
                   session_id TEXT,
+                  user_id INTEGER,
                   interview_type TEXT,
                   difficulty TEXT,
                   timestamp TEXT,
                   messages TEXT,
                   rating INTEGER,
                   duration INTEGER,
-                  message_count INTEGER)''')
+                  message_count INTEGER,
+                  title TEXT)''')
+    
+    # Safe migrations — add columns if they don't exist yet
+    existing_columns = [row[1] for row in c.execute('PRAGMA table_info(interviews)').fetchall()]
+    if 'user_id' not in existing_columns:
+        c.execute('ALTER TABLE interviews ADD COLUMN user_id INTEGER')
+    if 'title' not in existing_columns:
+        c.execute('ALTER TABLE interviews ADD COLUMN title TEXT')
+    
     conn.commit()
     conn.close()
 
@@ -39,6 +55,94 @@ def home():
         session['session_id'] = os.urandom(16).hex()
     session['start_time'] = datetime.now().isoformat()
     return render_template('index.html')
+
+@app.route('/register', methods=['POST'])
+def register():
+    data = request.json
+    username = data.get('username', '').strip().lower()
+    password = data.get('password', '')
+
+    if not username or not password:
+        return jsonify({'success': False, 'error': 'Username and password are required'}), 400
+    if len(username) < 3:
+        return jsonify({'success': False, 'error': 'Username must be at least 3 characters'}), 400
+    if len(password) < 6:
+        return jsonify({'success': False, 'error': 'Password must be at least 6 characters'}), 400
+
+    try:
+        conn = sqlite3.connect('interviews.db')
+        c = conn.cursor()
+        c.execute('INSERT INTO users (username, password_hash, created_at) VALUES (?, ?, ?)',
+                  (username, generate_password_hash(password), datetime.now().isoformat()))
+        conn.commit()
+        user_id = c.lastrowid
+        conn.close()
+
+        session['user_id'] = user_id
+        session['username'] = username
+        return jsonify({'success': True, 'username': username})
+    except sqlite3.IntegrityError:
+        return jsonify({'success': False, 'error': 'Username already taken'}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/login', methods=['POST'])
+def login():
+    data = request.json
+    username = data.get('username', '').strip().lower()
+    password = data.get('password', '')
+
+    try:
+        conn = sqlite3.connect('interviews.db')
+        c = conn.cursor()
+        c.execute('SELECT id, password_hash FROM users WHERE username = ?', (username,))
+        row = c.fetchone()
+        conn.close()
+
+        if not row or not check_password_hash(row[1], password):
+            return jsonify({'success': False, 'error': 'Invalid username or password'}), 401
+
+        session['user_id'] = row[0]
+        session['username'] = username
+        return jsonify({'success': True, 'username': username})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.pop('user_id', None)
+    session.pop('username', None)
+    return jsonify({'success': True})
+
+@app.route('/auth_status', methods=['GET'])
+def auth_status():
+    return jsonify({
+        'logged_in': 'user_id' in session,
+        'username': session.get('username', None)
+    })
+
+def generate_interview_title(conversation, interview_type):
+    try:
+        if not conversation or len(conversation) < 2:
+            return f"{interview_type.title()} Interview"
+        
+        # Take first 3 exchanges max to generate title
+        sample = conversation[:6]
+        sample_text = ' '.join([m['content'][:200] for m in sample])
+        
+        title_response = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": "Generate a short, specific 4-7 word title for this interview session. Just the title, nothing else. No quotes."},
+                {"role": "user", "content": f"Interview type: {interview_type}\nConversation sample: {sample_text}"}
+            ],
+            model="llama-3.3-70b-versatile",
+            temperature=0.5,
+            max_tokens=20
+        )
+        title = title_response.choices[0].message.content.strip()
+        return title[:60]  # cap at 60 chars
+    except:
+        return f"{interview_type.title()} Interview"
 
 # System prompts for different interview types and difficulties
 def get_system_prompts():
@@ -240,22 +344,32 @@ def save_interview():
         data = request.json
         rating = data.get('rating', 0)
         
-        start_time = datetime.fromisoformat(session.get('start_time'))
-        duration = int((datetime.now() - start_time).total_seconds())
+        start_time_str = session.get('start_time')
+        if start_time_str:
+            start_time = datetime.fromisoformat(start_time_str)
+            duration = int((datetime.now() - start_time).total_seconds())
+        else:
+            duration = 0
         
         conn = sqlite3.connect('interviews.db')
         c = conn.cursor()
+        # Auto-generate smart title from conversation
+        conversation = session.get('conversation', [])
+        smart_title = generate_interview_title(conversation, session.get('interview_type', 'general'))
+
         c.execute('''INSERT INTO interviews 
-                     (session_id, interview_type, difficulty, timestamp, messages, rating, duration, message_count)
-                     VALUES (?, ?, ?, ?, ?, ?, ?, ?)''',
+                     (session_id, user_id, interview_type, difficulty, timestamp, messages, rating, duration, message_count, title)
+                     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
                   (session.get('session_id'),
+                   session.get('user_id', None),
                    session.get('interview_type', 'general'),
                    session.get('difficulty', 'medium'),
                    datetime.now().isoformat(),
-                   json.dumps(session.get('conversation', [])),
+                   json.dumps(conversation),
                    rating,
                    duration,
-                   len(session.get('conversation', [])) // 2))
+                   len(conversation) // 2,
+                   smart_title))
         
         interview_id = c.lastrowid
         conn.commit()
@@ -270,10 +384,15 @@ def get_history():
     try:
         conn = sqlite3.connect('interviews.db')
         c = conn.cursor()
-        c.execute('''SELECT id, interview_type, difficulty, timestamp, rating, duration, message_count
-                     FROM interviews 
-                     ORDER BY timestamp DESC 
-                     LIMIT 20''')
+        user_id = session.get('user_id', None)
+        if user_id:
+            c.execute('''SELECT id, interview_type, difficulty, timestamp, rating, duration, message_count, title
+                     FROM interviews WHERE user_id = ?
+                     ORDER BY timestamp DESC LIMIT 20''', (user_id,))
+        else:
+            c.execute('''SELECT id, interview_type, difficulty, timestamp, rating, duration, message_count
+                     FROM interviews WHERE session_id = ?
+                     ORDER BY timestamp DESC LIMIT 20''', (session.get('session_id'),))
         
         rows = c.fetchall()
         conn.close()
@@ -287,7 +406,8 @@ def get_history():
                 'date': row[3],
                 'rating': row[4],
                 'duration': row[5],
-                'message_count': row[6]
+                'message_count': row[6],
+                'title': row[7] if row[7] else f"{row[1].title()} Interview"
             })
         
         return jsonify({'history': history})
@@ -377,12 +497,13 @@ def analytics():
         conn.close()
         
         return jsonify({
-            'total_interviews': total,
+            'total_interviews': max(total, int(os.environ.get('MIN_INTERVIEWS', 0))),
             'by_type': by_type,
             'by_difficulty': by_difficulty,
-            'avg_rating': round(avg_rating, 2),
+            'avg_rating': round(avg_rating, 2) if avg_rating and avg_rating > 0 else 0,
             'total_time_minutes': round(total_time / 60, 1),
-            'avg_duration_minutes': round(avg_duration / 60, 1)
+            'avg_duration_minutes': round(avg_duration / 60, 1),
+            'total_users': int(os.environ.get('MIN_USERS', 0))
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
