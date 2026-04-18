@@ -703,7 +703,7 @@
                 <!-- filled by JS -->
             </div>
             <div class="modal-actions" id="summaryActions" style="display:none;">
-                <button class="modal-btn secondary" onclick="document.getElementById('summaryModal').classList.remove('active')">Close</button>
+                <button class="modal-btn secondary" onclick="closeSummaryAndRefresh()">Close</button>
                 <button class="modal-btn primary" onclick="exportTranscript()">📥 Export Transcript</button>
             </div>
         </div>
@@ -1442,6 +1442,7 @@
                 document.getElementById('summaryLoading').style.display = 'none';
                 document.getElementById('summaryContent').style.display = 'block';
                 document.getElementById('summaryActions').style.display = 'flex';
+                loadHistory();
 
             } catch(e) {
                 document.getElementById('summaryLoading').innerHTML = `
@@ -1584,6 +1585,15 @@
                 showToast('Failed to delete', 'error');
             }
         }
+        function closeSummaryAndRefresh() {
+            document.getElementById('summaryModal').classList.remove('active');
+            const guestId = localStorage.getItem('guest_session_id');
+            if (guestId) {
+                window.location.href = `/?guest_id=${guestId}`;
+            } else {
+                location.reload();
+            }
+        }
 
         function searchHistory() {
             const query = document.getElementById('searchBox').value.toLowerCase();
@@ -1596,6 +1606,23 @@
         // ── STARTUP ──
         if (localStorage.getItem('theme')) {
             document.body.dataset.theme = localStorage.getItem('theme');
+        }
+
+        // Persist guest session_id across reloads
+        if (!localStorage.getItem('guest_session_id')) {
+            // Get current session_id from server and store it
+            fetch('/get_session_id').then(r => r.json()).then(d => {
+                if (d.session_id) localStorage.setItem('guest_session_id', d.session_id);
+            });
+        } else {
+            // If we have a stored guest_id and not logged in, restore it
+            const guestId = localStorage.getItem('guest_session_id');
+            if (guestId && !window.location.search.includes('guest_id')) {
+                const url = new URL(window.location);
+                url.searchParams.set('guest_id', guestId);
+                window.history.replaceState({}, '', url);
+                fetch(`/?guest_id=${guestId}`);
+            }
         }
         if (window.innerWidth <= 768) {
             document.getElementById('sidebar').classList.add('hidden');

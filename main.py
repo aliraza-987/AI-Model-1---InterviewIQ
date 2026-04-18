@@ -51,7 +51,11 @@ init_db()
 
 @app.route('/')
 def home():
-    if 'session_id' not in session:
+    # Restore guest session_id from query param if provided
+    guest_id = request.args.get('guest_id')
+    if guest_id:
+        session['session_id'] = guest_id
+    elif 'session_id' not in session:
         session['session_id'] = os.urandom(16).hex()
     session['start_time'] = datetime.now().isoformat()
     return render_template('index.html')
@@ -843,6 +847,10 @@ Return exactly this structure:
         
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/get_session_id', methods=['GET'])
+def get_session_id():
+    return jsonify({'session_id': session.get('session_id', '')})
     
 @app.route('/delete_interview/<int:interview_id>', methods=['DELETE'])
 def delete_interview(interview_id):
