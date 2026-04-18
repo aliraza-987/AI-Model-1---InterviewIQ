@@ -696,6 +696,13 @@
         <div class="modal-content" onclick="event.stopPropagation()" style="max-width:540px;">
             <h2 class="modal-title">🎯 Before We Begin</h2>
             <p style="font-size:14px;color:var(--text-secondary);margin-bottom:24px;margin-top:-16px;line-height:1.6;">Help us personalize your interview. All fields are optional — you can stay anonymous.</p>
+            <div style="margin-top:20px;padding:14px 16px;background:var(--accent-light);border-radius:12px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Stay Anonymous</div>
+                    <div style="font-size:12px;color:var(--text-secondary);">Skip all fields and start immediately</div>
+                </div>
+                <button onclick="startAnonymous()" class="modal-btn secondary" style="margin:0;padding:8px 16px;font-size:13px;">Skip & Start →</button>
+            </div>
 
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
                 <div class="setting-group" style="margin-bottom:0;">
@@ -755,14 +762,7 @@
                 <textarea class="select-input" id="q_notes" rows="3" placeholder="e.g. I struggle with dynamic programming, I have a gap year, I want to be challenged more..." style="resize:none;line-height:1.5;font-family:'Plus Jakarta Sans','Inter',sans-serif;"></textarea>
             </div>
 
-            <div style="margin-top:20px;padding:14px 16px;background:var(--accent-light);border-radius:12px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
-                <div>
-                    <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Stay Anonymous</div>
-                    <div style="font-size:12px;color:var(--text-secondary);">Skip all fields and start immediately</div>
-                </div>
-                <button onclick="startAnonymous()" class="modal-btn secondary" style="margin:0;padding:8px 16px;font-size:13px;">Skip & Start →</button>
-            </div>
-
+        
             <div class="modal-actions">
                 <button class="modal-btn secondary" onclick="closeQuestionnaire()">Cancel</button>
                 <button class="modal-btn primary" onclick="submitQuestionnaire()">Start Interview 🚀</button>
@@ -1220,7 +1220,11 @@
         
         function scrollToBottom() {
             const container = document.getElementById('messagesContainer');
-            container.scrollTop = container.scrollHeight;
+            const threshold = 100;
+            const isNearBottom = container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+            if (isNearBottom) {
+                container.scrollTop = container.scrollHeight;
+            }
         }
         
         function copyMessage(btn) {
