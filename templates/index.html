@@ -258,7 +258,7 @@
         .messages-wrapper { max-width:860px; margin:0 auto; padding:32px 24px 140px; width:100%; }
 
         /* ── WELCOME ── */
-        .welcome { text-align:center; padding:48px 24px 80px; }
+        .welcome { text-align:center; padding:24px 24px 60px; }
 
         .welcome-title {
             font-size:38px; font-weight:800; margin-bottom:12px;
@@ -271,10 +271,10 @@
             line-height:1.7; animation:fadeInUp 0.4s ease 0.2s both; font-weight:400;
         }
 
-        .interview-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:20px; max-width:860px; margin:0 auto; }
+        .interview-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; max-width:960px; margin:0 auto; }
 
         .interview-card {
-            padding:28px; background:var(--bg-white);
+            padding: 20px; background:var(--bg-white);
             border:1.5px solid var(--border); border-radius:20px;
             cursor:pointer; transition:all 0.25s cubic-bezier(0.4,0,0.2,1);
             text-align:left; animation:fadeInUp 0.4s ease both; box-shadow:var(--shadow-sm);
@@ -561,32 +561,53 @@
             <div class="messages-container" id="messagesContainer">
                 <div class="messages-wrapper" id="chatBox">
                     <div class="welcome" id="welcomeScreen">
-                        <img src="/static/logo.png" alt="InterviewIQ" class="welcome-logo">
-                        <h1 class="welcome-title">Welcome to InterviewIQ</h1>
-                        <p class="welcome-subtitle">Your AI-powered interview coach available 24/7.<br>Practice coding, behavioral, and system design interviews with instant feedback.</p>
-                        
-                        <!-- Stats Widget -->
-                        <div class="stats-widget" id="statsWidget">
-                            <div class="stat-card">
-                                <div class="stat-number" id="statTotal">—</div>
-                                <div class="stat-label">Total Interviews</div>
+
+                        <!-- HERO -->
+                        <div style="margin-bottom:16px; animation:fadeInUp 0.5s ease both;">
+                            <div style="display:inline-flex; align-items:center; gap:8px; background:var(--accent-light); border:1.5px solid var(--border); border-radius:100px; padding:6px 16px; margin-bottom:14px;">
+                                <span style="width:8px;height:8px;border-radius:50%;background:var(--accent-2);display:inline-block;animation:pulse 1.5s infinite;"></span>
+                                <span style="font-size:13px;font-weight:600;color:var(--accent);">AI-Powered Interview Coach</span>
                             </div>
-                            
-                            <div class="stat-card">
-                                <div class="stat-number" id="statRating">—</div>
-                                <div class="stat-label">Avg Rating</div>
-                            </div>
-                            <div class="stat-card">
-                                <div class="stat-number" id="statUsers">30+</div>
-                                <div class="stat-label">Users</div>
+                            <h1 style="font-size:34px;font-weight:800;letter-spacing:-0.03em;line-height:1.2;margin-bottom:10px;background:var(--gradient);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">
+                                Ace Your Next Interview
+                            </h1>
+                            <p style="font-size:15px;color:var(--text-secondary);line-height:1.6;max-width:480px;margin:0 auto 20px;font-weight:400;">
+                                Practice with a real AI interviewer and land your dream job.
+                            </p>
+
+                            <!-- STATS ROW -->
+                            <div class="stats-widget" id="statsWidget" style="margin-bottom:0;gap:10px;">
+                                <div class="stat-card">
+                                    <div class="stat-number" id="statTotal">—</div>
+                                    <div class="stat-label">Interviews Done</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="statRating">—</div>
+                                    <div class="stat-label">Avg Rating</div>
+                                </div>
+                                <div class="stat-card">
+                                    <div class="stat-number" id="statUsers">30+</div>
+                                    <div class="stat-label">Users</div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="interview-grid">
+                                                <!-- INTERVIEW CARDS -->
+                        <p style="font-size:12px;font-weight:700;color:var(--text-tertiary);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:12px;margin-top:24px;animation:fadeInUp 0.5s ease 0.2s both;">Choose Interview Type</p>
+                        <div class="interview-grid" style="animation:fadeInUp 0.5s ease 0.25s both;">
                             <div class="interview-card" onclick="startInterview('coding')">
-                                <span class="card-icon">💻</span>
-                                <div class="card-title">Coding Interview</div>
-                                <div class="card-desc">Master algorithms, data structures, and problem-solving with FAANG-level questions</div>
+                                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                                    <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#E0F2FF,#BAE6FD);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">💻</div>
+                                    <div>
+                                        <div class="card-title" style="margin-bottom:2px;">Coding Interview</div>
+                                        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                                            <span style="font-size:10px;font-weight:600;color:var(--accent);background:var(--accent-light);padding:2px 8px;border-radius:20px;">LeetCode</span>
+                                            <span style="font-size:10px;font-weight:600;color:var(--accent);background:var(--accent-light);padding:2px 8px;border-radius:20px;">FAANG</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-desc">Master algorithms, data structures & problem-solving with instant AI feedback</div>
+                                <div style="margin-top:12px;margin-bottom:12px;"></div>
                                 <div class="difficulty-selector">
                                     <button class="diff-btn" onclick="setDiff(event, 'easy')">Easy</button>
                                     <button class="diff-btn active" onclick="setDiff(event, 'medium')">Medium</button>
@@ -594,9 +615,18 @@
                                 </div>
                             </div>
                             <div class="interview-card" onclick="startInterview('behavioral')">
-                                <span class="card-icon">💬</span>
-                                <div class="card-title">Behavioral Interview</div>
-                                <div class="card-desc">Perfect your STAR method answers and communication skills for any company</div>
+                                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                                    <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#F0FFF4,#BBF7D0);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🎯</div>
+                                    <div>
+                                        <div class="card-title" style="margin-bottom:2px;">Behavioral Interview</div>
+                                        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                                            <span style="font-size:10px;font-weight:600;color:#059669;background:#D1FAE5;padding:2px 8px;border-radius:20px;">STAR Method</span>
+                                            <span style="font-size:10px;font-weight:600;color:#059669;background:#D1FAE5;padding:2px 8px;border-radius:20px;">HR Ready</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-desc">Master STAR method answers and communication skills for any top company</div>
+                                <div style="margin-top:12px;margin-bottom:12px;"></div>
                                 <div class="difficulty-selector">
                                     <button class="diff-btn" onclick="setDiff(event, 'easy')">Easy</button>
                                     <button class="diff-btn active" onclick="setDiff(event, 'medium')">Medium</button>
@@ -604,9 +634,18 @@
                                 </div>
                             </div>
                             <div class="interview-card" onclick="startInterview('system design')">
-                                <span class="card-icon">🏗️</span>
-                                <div class="card-title">System Design</div>
-                                <div class="card-desc">Design scalable, robust distributed systems like a senior engineer</div>
+                                <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+                                    <div style="width:44px;height:44px;border-radius:12px;background:linear-gradient(135deg,#FFF7ED,#FED7AA);display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;">🏗️</div>
+                                    <div>
+                                        <div class="card-title" style="margin-bottom:2px;">System Design</div>
+                                        <div style="display:flex;gap:5px;flex-wrap:wrap;">
+                                            <span style="font-size:10px;font-weight:600;color:#D97706;background:#FEF3C7;padding:2px 8px;border-radius:20px;">Senior Level</span>
+                                            <span style="font-size:10px;font-weight:600;color:#D97706;background:#FEF3C7;padding:2px 8px;border-radius:20px;">Architecture</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="card-desc">Design scalable distributed systems like a senior engineer</div>
+                                <div style="margin-top:12px;margin-bottom:12px;"></div>
                                 <div class="difficulty-selector">
                                     <button class="diff-btn" onclick="setDiff(event, 'easy')">Easy</button>
                                     <button class="diff-btn active" onclick="setDiff(event, 'medium')">Medium</button>
