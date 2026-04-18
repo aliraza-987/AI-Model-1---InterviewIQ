@@ -691,7 +691,84 @@
             </div>
         </div>
     </div>
-    
+    <!-- Pre-Interview Questionnaire Modal -->
+    <div class="modal" id="questionnaireModal" onclick="closeModalOnOutsideClick(event)">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width:540px;">
+            <h2 class="modal-title">🎯 Before We Begin</h2>
+            <p style="font-size:14px;color:var(--text-secondary);margin-bottom:24px;margin-top:-16px;line-height:1.6;">Help us personalize your interview. All fields are optional — you can stay anonymous.</p>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+                <div class="setting-group" style="margin-bottom:0;">
+                    <label class="setting-label">Application Type</label>
+                    <select class="select-input" id="q_app_type">
+                        <option value="">Select type...</option>
+                        <option value="Internship">Internship</option>
+                        <option value="Fresher / First Job">Fresher / First Job</option>
+                        <option value="Full-time Job">Full-time Job</option>
+                        <option value="Senior Role">Senior Role</option>
+                    </select>
+                </div>
+                <div class="setting-group" style="margin-bottom:0;">
+                    <label class="setting-label">Experience Level</label>
+                    <select class="select-input" id="q_experience">
+                        <option value="">Select level...</option>
+                        <option value="No experience (Student)">No experience (Student)</option>
+                        <option value="0-1 years">0-1 years</option>
+                        <option value="1-3 years">1-3 years</option>
+                        <option value="3-5 years">3-5 years</option>
+                        <option value="5+ years">5+ years</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;">
+                <div class="setting-group" style="margin-bottom:0;">
+                    <label class="setting-label">Target Company <span style="font-weight:400;color:var(--text-tertiary);">(optional)</span></label>
+                    <input type="text" class="select-input" id="q_company" placeholder="e.g. Google, Amazon...">
+                </div>
+                <div class="setting-group" style="margin-bottom:0;">
+                    <label class="setting-label">Role / Position <span style="font-weight:400;color:var(--text-tertiary);">(optional)</span></label>
+                    <input type="text" class="select-input" id="q_role" placeholder="e.g. Software Engineer...">
+                </div>
+            </div>
+
+            <div style="margin-top:16px;" class="setting-group" style="margin-bottom:0;">
+                <label class="setting-label">Tech Stack <span style="font-weight:400;color:var(--text-tertiary);">(optional)</span></label>
+                <input type="text" class="select-input" id="q_tech" placeholder="e.g. Python, React, Node.js, SQL...">
+            </div>
+
+            <div style="margin-top:16px;" class="setting-group" style="margin-bottom:0;">
+                <label class="setting-label">What do you want to focus on? <span style="font-weight:400;color:var(--text-tertiary);">(optional)</span></label>
+                <select class="select-input" id="q_focus">
+                    <option value="">No specific focus</option>
+                    <option value="Problem solving speed">Problem solving speed</option>
+                    <option value="Code quality and clean code">Code quality and clean code</option>
+                    <option value="System design thinking">System design thinking</option>
+                    <option value="Communication and clarity">Communication and clarity</option>
+                    <option value="Handling pressure and tough questions">Handling pressure and tough questions</option>
+                    <option value="Structuring answers (STAR method)">Structuring answers (STAR method)</option>
+                </select>
+            </div>
+
+            <div style="margin-top:16px;" class="setting-group" style="margin-bottom:0;">
+                <label class="setting-label">Anything else the AI should know? <span style="font-weight:400;color:var(--text-tertiary);">(optional)</span></label>
+                <textarea class="select-input" id="q_notes" rows="3" placeholder="e.g. I struggle with dynamic programming, I have a gap year, I want to be challenged more..." style="resize:none;line-height:1.5;font-family:'Plus Jakarta Sans','Inter',sans-serif;"></textarea>
+            </div>
+
+            <div style="margin-top:20px;padding:14px 16px;background:var(--accent-light);border-radius:12px;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+                <div>
+                    <div style="font-size:13px;font-weight:700;color:var(--text-primary);">Stay Anonymous</div>
+                    <div style="font-size:12px;color:var(--text-secondary);">Skip all fields and start immediately</div>
+                </div>
+                <button onclick="startAnonymous()" class="modal-btn secondary" style="margin:0;padding:8px 16px;font-size:13px;">Skip & Start →</button>
+            </div>
+
+            <div class="modal-actions">
+                <button class="modal-btn secondary" onclick="closeQuestionnaire()">Cancel</button>
+                <button class="modal-btn primary" onclick="submitQuestionnaire()">Start Interview 🚀</button>
+            </div>
+        </div>
+    </div>
     <!-- Settings Modal -->
     <div class="modal" id="settingsModal" onclick="closeModalOnOutsideClick(event)">
         <div class="modal-content" onclick="event.stopPropagation()">
@@ -940,7 +1017,43 @@
             event.target.classList.add('active');
         }
         
+        let pendingInterviewType = null;
+
         function startInterview(type) {
+            pendingInterviewType = type;
+            // Clear previous questionnaire fields
+            ['q_app_type','q_experience','q_company','q_role','q_tech','q_focus','q_notes'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.value = '';
+            });
+            document.getElementById('questionnaireModal').classList.add('active');
+        }
+
+        function closeQuestionnaire() {
+            document.getElementById('questionnaireModal').classList.remove('active');
+            pendingInterviewType = null;
+        }
+
+        function startAnonymous() {
+            document.getElementById('questionnaireModal').classList.remove('active');
+            launchInterview(pendingInterviewType, null);
+        }
+
+        function submitQuestionnaire() {
+            const candidate_info = {
+                app_type: document.getElementById('q_app_type').value,
+                company: document.getElementById('q_company').value.trim(),
+                role: document.getElementById('q_role').value.trim(),
+                experience: document.getElementById('q_experience').value,
+                tech_stack: document.getElementById('q_tech').value.trim(),
+                focus_area: document.getElementById('q_focus').value,
+                notes: document.getElementById('q_notes').value.trim()
+            };
+            document.getElementById('questionnaireModal').classList.remove('active');
+            launchInterview(pendingInterviewType, candidate_info);
+        }
+
+        function launchInterview(type, candidate_info) {
             document.getElementById('welcomeScreen').remove();
             document.getElementById('typeDisplay').style.display = 'flex';
             document.getElementById('interviewType').textContent = type.charAt(0).toUpperCase() + type.slice(1);
@@ -952,9 +1065,13 @@
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ difficulty: selectedDifficulty })
             });
-            
-            addMessage(`I'd like to practice ${type} interviews at ${selectedDifficulty} level`, 'user');
-            sendToAI(`Start a ${type} interview at ${selectedDifficulty} difficulty`);
+
+            const context = candidate_info && (candidate_info.company || candidate_info.role || candidate_info.app_type)
+                ? ` I am applying for ${candidate_info.app_type || 'a position'}${candidate_info.role ? ` as ${candidate_info.role}` : ''}${candidate_info.company ? ` at ${candidate_info.company}` : ''}.`
+                : '';
+
+            addMessage(`I'd like to practice ${type} interviews at ${selectedDifficulty} level.${context}`, 'user');
+            sendToAI(`Start a ${type} interview at ${selectedDifficulty} difficulty`, candidate_info);
         }
         
         async function sendMessage() {
@@ -973,7 +1090,7 @@
             await sendToAI(msg);
         }
         
-        async function sendToAI(msg) {
+        async function sendToAI(msg, candidate_info = null) {
             showTyping();
             showProgress();
             
@@ -981,7 +1098,7 @@
                 const response = await fetch('/interview_stream', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: msg, difficulty: selectedDifficulty })
+                    body: JSON.stringify({ message: msg, difficulty: selectedDifficulty, candidate_info: candidate_info })
                 });
                 
                 const reader = response.body.getReader();

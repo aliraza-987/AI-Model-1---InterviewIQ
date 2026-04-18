@@ -265,11 +265,16 @@ def interview_stream():
     data = request.json
     user_message = data.get('message', '')
     difficulty = data.get('difficulty', 'medium')
+    candidate_info = data.get('candidate_info', None)
     
     if 'conversation' not in session:
         session['conversation'] = []
         session['interview_type'] = 'general'
         session['difficulty'] = difficulty
+    
+    if candidate_info:
+        session['candidate_info'] = candidate_info
+        session.modified = True
     
     # Detect interview type from first message
     if len(session['conversation']) == 0:
@@ -292,6 +297,27 @@ def interview_stream():
     system_prompts = get_system_prompts()
     system_prompt = system_prompts.get(interview_type, {}).get(current_difficulty, 
                     system_prompts['general']['medium'])
+    
+    # Inject candidate info into system prompt if available
+    candidate_info = session.get('candidate_info', None)
+    if candidate_info:
+        context = "\n\n--- CANDIDATE CONTEXT ---"
+        if candidate_info.get('app_type'):
+            context += f"\nApplication Type: {candidate_info['app_type']}"
+        if candidate_info.get('company'):
+            context += f"\nTarget Company: {candidate_info['company']}"
+        if candidate_info.get('role'):
+            context += f"\nRole Applying For: {candidate_info['role']}"
+        if candidate_info.get('experience'):
+            context += f"\nExperience Level: {candidate_info['experience']}"
+        if candidate_info.get('tech_stack'):
+            context += f"\nTech Stack: {candidate_info['tech_stack']}"
+        if candidate_info.get('focus_area'):
+            context += f"\nFocus Area: {candidate_info['focus_area']}"
+        if candidate_info.get('notes'):
+            context += f"\nCandidate Notes: {candidate_info['notes']}"
+        context += "\n\nUse this context to personalize every question, example, and piece of feedback. Address the candidate's specific situation throughout the interview."
+        system_prompt += context
     
     messages = [
         {"role": "system", "content": system_prompt}
