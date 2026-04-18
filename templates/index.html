@@ -691,6 +691,23 @@
             </div>
         </div>
     </div>
+    <!-- Interview Summary Modal -->
+    <div class="modal" id="summaryModal" onclick="closeModalOnOutsideClick(event)">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-width:580px;">
+            <div id="summaryLoading" style="text-align:center;padding:40px;">
+                <div style="font-size:40px;margin-bottom:16px;">🤖</div>
+                <div style="font-size:16px;font-weight:600;color:var(--text-primary);margin-bottom:8px;">Analyzing your interview...</div>
+                <div style="font-size:14px;color:var(--text-secondary);">Generating your personalized performance report</div>
+            </div>
+            <div id="summaryContent" style="display:none;">
+                <!-- filled by JS -->
+            </div>
+            <div class="modal-actions" id="summaryActions" style="display:none;">
+                <button class="modal-btn secondary" onclick="document.getElementById('summaryModal').classList.remove('active')">Close</button>
+                <button class="modal-btn primary" onclick="exportTranscript()">📥 Export Transcript</button>
+            </div>
+        </div>
+    </div>
     <!-- Pre-Interview Questionnaire Modal -->
     <div class="modal" id="questionnaireModal" onclick="closeModalOnOutsideClick(event)">
         <div class="modal-content" onclick="event.stopPropagation()" style="max-width:540px;">
@@ -1347,16 +1364,91 @@
         async function saveInterview() {
             const rating = prompt('⭐ Rate this interview (1-5):');
             if (!rating || rating < 1 || rating > 5) return;
+
+            // Save first
             const res = await fetch('/save_interview', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ rating: parseInt(rating) })
             });
             if (res.ok) {
-                showToast('Interview saved successfully!', 'success');
+                showToast('Interview saved!', 'success');
                 loadHistory();
             } else {
                 showToast('Failed to save interview', 'error');
+                return;
+            }
+
+            // Show summary modal and generate report
+            document.getElementById('summaryModal').classList.add('active');
+            document.getElementById('summaryLoading').style.display = 'block';
+            document.getElementById('summaryContent').style.display = 'none';
+            document.getElementById('summaryActions').style.display = 'none';
+
+            try {
+                const sumRes = await fetch('/generate_summary', { method: 'POST' });
+                const sumData = await sumRes.json();
+
+                if (!sumData.success) throw new Error(sumData.error);
+
+                const s = sumData.summary;
+                const scoreColor = s.score >= 80 ? '#10B981' : s.score >= 60 ? '#F59E0B' : '#EF4444';
+                const gradeColor = s.grade === 'A' ? '#10B981' : s.grade === 'B' ? '#3B82F6' : s.grade === 'C' ? '#F59E0B' : '#EF4444';
+
+                document.getElementById('summaryContent').innerHTML = `
+                    <div style="text-align:center;margin-bottom:24px;">
+                        <div style="font-size:22px;font-weight:800;color:var(--text-primary);margin-bottom:4px;">Interview Performance Report</div>
+                        <div style="font-size:14px;color:var(--text-secondary);">${document.getElementById('interviewType').textContent || 'Interview'} · ${new Date().toLocaleDateString()}</div>
+                    </div>
+
+                    <div style="display:flex;gap:12px;justify-content:center;margin-bottom:24px;">
+                        <div style="text-align:center;padding:20px 28px;background:var(--bg-secondary);border-radius:16px;border:1.5px solid var(--border);">
+                            <div style="font-size:40px;font-weight:800;color:${scoreColor};">${s.score}</div>
+                            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Score /100</div>
+                        </div>
+                        <div style="text-align:center;padding:20px 28px;background:var(--bg-secondary);border-radius:16px;border:1.5px solid var(--border);">
+                            <div style="font-size:40px;font-weight:800;color:${gradeColor};">${s.grade}</div>
+                            <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">Grade</div>
+                        </div>
+                        <div style="text-align:center;padding:20px 28px;background:var(--bg-secondary);border-radius:16px;border:1.5px solid var(--border);flex:1;">
+                            <div style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">${s.recommendation}</div>
+                            <div style="font-size:12px;color:var(--text-secondary);">Verdict</div>
+                        </div>
+                    </div>
+
+                    <div style="padding:16px;background:var(--accent-light);border-radius:12px;border:1.5px solid var(--border);margin-bottom:20px;">
+                        <div style="font-size:13px;color:var(--text-primary);line-height:1.6;">${s.detailed_feedback}</div>
+                    </div>
+
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px;">
+                        <div style="padding:16px;background:var(--bg-secondary);border-radius:12px;border:1.5px solid var(--border);">
+                            <div style="font-size:13px;font-weight:700;color:#10B981;margin-bottom:10px;">✅ Strengths</div>
+                            ${s.strengths.map(str => `<div style="font-size:13px;color:var(--text-primary);margin-bottom:6px;padding-left:8px;">• ${str}</div>`).join('')}
+                        </div>
+                        <div style="padding:16px;background:var(--bg-secondary);border-radius:12px;border:1.5px solid var(--border);">
+                            <div style="font-size:13px;font-weight:700;color:#F59E0B;margin-bottom:10px;">📈 Improve On</div>
+                            ${s.improvements.map(imp => `<div style="font-size:13px;color:var(--text-primary);margin-bottom:6px;padding-left:8px;">• ${imp}</div>`).join('')}
+                        </div>
+                    </div>
+
+                    <div style="padding:14px 16px;background:var(--bg-secondary);border-radius:12px;border:1.5px solid var(--border);">
+                        <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">📚 Topics Covered</div>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            ${s.topics_covered.map(t => `<span style="font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-light);padding:4px 12px;border-radius:20px;">${t}</span>`).join('')}
+                        </div>
+                    </div>
+                `;
+
+                document.getElementById('summaryLoading').style.display = 'none';
+                document.getElementById('summaryContent').style.display = 'block';
+                document.getElementById('summaryActions').style.display = 'flex';
+
+            } catch(e) {
+                document.getElementById('summaryLoading').innerHTML = `
+                    <div style="font-size:40px;margin-bottom:16px;">❌</div>
+                    <div style="font-size:15px;color:var(--danger);">Could not generate summary</div>
+                    <div style="font-size:13px;color:var(--text-secondary);margin-top:8px;">${e.message}</div>
+                `;
             }
         }
         
@@ -1383,9 +1475,17 @@
                         const item = document.createElement('div');
                         item.className = 'history-item';
                         item.innerHTML = `
-                            <div class="history-title">${chat.title}</div>
-                            <div style="font-size:11px; color:var(--text-tertiary); margin-top:2px;">${chat.type} · ${chat.difficulty} · ${date}</div>
+                            <div style="flex:1;min-width:0;">
+                                <div class="history-title">${chat.title}</div>
+                                <div style="font-size:11px; color:var(--text-tertiary); margin-top:2px;">${chat.type} · ${chat.difficulty} · ${date}</div>
+                            </div>
+                            <button onclick="deleteChat(event, ${chat.id})" style="flex-shrink:0;width:26px;height:26px;border:none;background:transparent;color:var(--text-tertiary);font-size:14px;cursor:pointer;border-radius:6px;display:flex;align-items:center;justify-content:center;opacity:0;transition:all 0.2s;" class="delete-chat-btn">🗑️</button>
                         `;
+                        item.style.display = 'flex';
+                        item.style.alignItems = 'center';
+                        item.style.gap = '6px';
+                        item.addEventListener('mouseenter', () => item.querySelector('.delete-chat-btn').style.opacity = '1');
+                        item.addEventListener('mouseleave', () => item.querySelector('.delete-chat-btn').style.opacity = '0');
                         historyEl.appendChild(item);
                     });
                 } else {
@@ -1472,6 +1572,17 @@
             checkAuthStatus();
             loadHistory();
             showToast('Logged out successfully', 'info');
+        }
+        async function deleteChat(event, id) {
+            event.stopPropagation();
+            if (!confirm('Delete this interview?')) return;
+            const res = await fetch(`/delete_interview/${id}`, { method: 'DELETE' });
+            if (res.ok) {
+                showToast('Interview deleted', 'info');
+                loadHistory();
+            } else {
+                showToast('Failed to delete', 'error');
+            }
         }
 
         function searchHistory() {

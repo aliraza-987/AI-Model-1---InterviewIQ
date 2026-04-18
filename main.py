@@ -646,6 +646,7 @@ def save_interview():
         c = conn.cursor()
         # Auto-generate smart title from conversation
         conversation = session.get('conversation', [])
+        print(f"DEBUG summary - conversation length: {len(conversation)}")
         smart_title = generate_interview_title(conversation, session.get('interview_type', 'general'))
 
         c.execute('''INSERT INTO interviews 
@@ -798,6 +799,62 @@ def analytics():
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+@app.route('/generate_summary', methods=['POST'])
+def generate_summary():
+    try:
+        conversation = session.get('conversation', [])
+        interview_type = session.get('interview_type', 'general')
+        difficulty = session.get('difficulty', 'medium')
+        
+        if not conversation or len(conversation) < 1:
+            return jsonify({'error': 'Not enough conversation to summarize'}), 400
+        
+        conversation_text = '\n'.join([
+            f"{'Candidate' if m['role'] == 'user' else 'Interviewer'}: {m['content']}"
+            for m in conversation
+        ])
+        
+        summary_response = client.chat.completions.create(
+            messages=[
+                {"role": "system", "content": """You are an expert interview coach. Analyze this interview conversation and provide a structured performance report in JSON format only. No extra text, no markdown, just pure JSON.
+
+Return exactly this structure:
+{
+    "score": <number 1-100>,
+    "grade": "<A/B/C/D>",
+    "verdict": "<one line verdict>",
+    "strengths": ["<strength 1>", "<strength 2>", "<strength 3>"],
+    "improvements": ["<area 1>", "<area 2>", "<area 3>"],
+    "topics_covered": ["<topic 1>", "<topic 2>", "<topic 3>"],
+    "recommendation": "<Ready to interview / Needs more practice / Keep practicing>",
+    "detailed_feedback": "<2-3 sentence personalized feedback paragraph>"
+}"""},
+                {"role": "user", "content": f"Interview Type: {interview_type}\nDifficulty: {difficulty}\n\nConversation:\n{conversation_text[:6000]}"}
+            ],
+            model="llama-3.3-70b-versatile",
+            temperature=0.3,
+            max_tokens=800
+        )
+        
+        raw = summary_response.choices[0].message.content.strip()
+        raw = raw.replace('```json', '').replace('```', '').strip()
+        summary_data = json.loads(raw)
+        return jsonify({'success': True, 'summary': summary_data})
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+    
+@app.route('/delete_interview/<int:interview_id>', methods=['DELETE'])
+def delete_interview(interview_id):
+    try:
+        conn = sqlite3.connect('interviews.db')
+        c = conn.cursor()
+        c.execute('DELETE FROM interviews WHERE id = ?', (interview_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({'success': True})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
 
 @app.route('/set_difficulty', methods=['POST'])
 def set_difficulty():
