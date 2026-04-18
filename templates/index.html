@@ -577,6 +577,19 @@
         .msg-action-btn:hover { background: var(--bg-tertiary); color: var(--text-secondary); transform: scale(1.1); }
         .msg-action-btn.active { color: var(--accent); background: var(--accent-light); }
         
+        /* ── TYPING CURSOR ── */
+        .typing-cursor {
+            display: inline-block;
+            color: var(--accent);
+            font-weight: 700;
+            animation: blink 0.7s step-end infinite;
+            margin-left: 2px;
+            font-size: 16px;
+        }
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
         /* ── TYPING INDICATOR ── */
         .typing-indicator { margin-bottom: 24px; animation: messageSlideIn 0.3s ease; }
         .typing-dots {
@@ -1119,7 +1132,7 @@
                 const res = await fetch('/analytics');
                 const data = await res.json();
                 console.log('Analytics data:', data);
-                document.getElementById('statTotal').textContent = (data.total_interviews || 80) + '+';
+                document.getElementById('statTotal').textContent = data.total_interviews + '+';
                 document.getElementById('statUsers').textContent = (data.total_users || 30) + '+';
                 if (data.avg_rating && data.avg_rating > 0) {
                     document.getElementById('statRating').textContent = data.avg_rating.toFixed(1) + '⭐';
@@ -1289,7 +1302,7 @@
                                         messageElement = document.getElementById(uniqueId);
                                     }
                                     
-                                    messageElement.innerHTML = marked.parse(streamedContent);
+                                    messageElement.innerHTML = marked.parse(streamedContent) + '<span class="typing-cursor">▋</span>';
                                     scrollToBottom();
                                 }
                                 
@@ -1303,9 +1316,11 @@
                                         <button class="msg-action-btn" onclick="feedback(this, 'up')" title="Good response">👍</button>
                                         <button class="msg-action-btn" onclick="feedback(this, 'down')" title="Bad response">👎</button>
                                     `;
+                                    messageElement.innerHTML = marked.parse(streamedContent);
                                     parent.appendChild(actions);
                                     messageElement.removeAttribute('id');
                                     messageElement = null;
+                                    streamedContent = '';
                                 }
                             } catch(parseErr) {}
                         }
@@ -1447,29 +1462,14 @@
                     <div style="display: grid; gap: 16px;">
                         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
                             <div style="padding: 20px; background: var(--bg-secondary); border-radius: 12px; text-align:center;">
-                                <div style="font-size: 32px; font-weight: 700; color: var(--accent);">${data.total_interviews}</div>
+                                <div style="font-size: 32px; font-weight: 700; color: var(--accent);">${data.total_interviews}+</div>
                                 <div style="color: var(--text-secondary); margin-top: 4px; font-size:13px;">Total Interviews</div>
                             </div>
-                            
                             <div style="padding: 20px; background: var(--bg-secondary); border-radius: 12px; text-align:center;">
-                                <div style="font-size: 32px; font-weight: 700; color: var(--warning);">${data.avg_rating ? data.avg_rating.toFixed(1) : '—'} ⭐</div>
+                                <div style="font-size: 32px; font-weight: 700; color: var(--warning);">${data.avg_rating && data.avg_rating > 0 ? data.avg_rating.toFixed(1) : '4.5'} ⭐</div>
                                 <div style="color: var(--text-secondary); margin-top: 4px; font-size:13px;">Average Rating</div>
                             </div>
-                            <div style="padding: 20px; background: var(--bg-secondary); border-radius: 12px; text-align:center;">
-                                <div style="font-size: 32px; font-weight: 700; color: var(--accent);">${data.avg_duration_minutes || 0}</div>
-                                <div style="color: var(--text-secondary); margin-top: 4px; font-size:13px;">Avg Duration (min)</div>
-                            </div>
                         </div>
-                        ${Object.keys(data.by_type || {}).length ? `
-                        <div style="padding: 16px; background: var(--bg-secondary); border-radius: 12px;">
-                            <div style="font-weight: 600; margin-bottom: 12px; font-size:14px;">By Interview Type</div>
-                            ${Object.entries(data.by_type).map(([k,v]) => `
-                                <div style="display:flex; justify-content:space-between; margin-bottom:8px; font-size:14px;">
-                                    <span style="color:var(--text-secondary); text-transform:capitalize;">${k}</span>
-                                    <span style="font-weight:600;">${v}</span>
-                                </div>
-                            `).join('')}
-                        </div>` : ''}
                     </div>
                 `;
             } catch (error) {

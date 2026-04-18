@@ -326,8 +326,8 @@ def interview_stream():
                 "content": full_response
             })
             
-            if len(session['conversation']) > 30:
-                session['conversation'] = session['conversation'][-30:]
+            if len(session['conversation']) > 50:
+                session['conversation'] = session['conversation'][-50:]
             
             session.modified = True
             
@@ -497,7 +497,7 @@ def analytics():
         conn.close()
         
         return jsonify({
-            'total_interviews': max(total, int(os.environ.get('MIN_INTERVIEWS', 0))),
+            'total_interviews': int(os.environ.get('MIN_INTERVIEWS', 0)) + total,
             'by_type': by_type,
             'by_difficulty': by_difficulty,
             'avg_rating': round(avg_rating, 2) if avg_rating and avg_rating > 0 else 0,
