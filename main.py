@@ -882,7 +882,7 @@ if __name__ == '__main__':
         while True:
             time.sleep(600)  # every 10 minutes
             try:
-                url = os.environ.get('RENDER_EXTERNAL_URL', 'https://interviewiq-83bs.onrender.com')
+                url = os.environ.get('RENDER_EXTERNAL_URL', 'your_new_render_url_here')
                 requests.get(url)
                 print("Keep-alive ping sent")
             except:
