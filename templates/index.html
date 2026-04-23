@@ -68,6 +68,15 @@
             color: var(--text-primary);
         }
         body { display: flex; }
+        /* ── SPLASH SCREEN ── */
+        @keyframes splashPulse {
+            0%, 100% { transform: scale(1); filter: brightness(0) invert(1); }
+            50% { transform: scale(1.05); filter: brightness(0) invert(1) drop-shadow(0 0 20px rgba(255,255,255,0.5)); }
+        }
+        @keyframes splashDot {
+            0%, 60%, 100% { transform: scale(1); opacity: 0.4; }
+            30% { transform: scale(1.4); opacity: 1; }
+        }
 
         /* ── TOAST ── */
         .toast-container {
@@ -478,7 +487,30 @@
     </style>
 </head>
 <body>
-
+<!-- Splash Screen -->
+    <div id="splashScreen" style="
+        position:fixed; top:0; left:0; right:0; bottom:0;
+        background: linear-gradient(135deg, #0D2137 0%, #1D7FBF 50%, #0EC4C4 100%);
+        z-index: 99999;
+        display:flex; flex-direction:column;
+        align-items:center; justify-content:center;
+        transition: opacity 0.8s ease;
+    ">
+        <div id="splashContent" style="text-align:center; opacity:0; transform:translateY(20px); transition: all 0.8s cubic-bezier(0.4,0,0.2,1);">
+            <img src="/static/logo.png" alt="InterviewIQ" style="height:72px; filter:brightness(0) invert(1); margin-bottom:20px; animation: splashPulse 2s ease infinite;">
+            <div style="font-size:32px; font-weight:800; color:white; letter-spacing:-0.02em; margin-bottom:12px; font-family:'Plus Jakarta Sans','Inter',sans-serif;">InterviewIQ</div>
+            <div id="splashTagline" style="font-size:15px; color:rgba(255,255,255,0.75); max-width:420px; line-height:1.7; font-weight:400; font-family:'Plus Jakarta Sans','Inter',sans-serif; opacity:0; transition: opacity 0.8s ease 0.4s;">
+                The AI interviewer that doesn't go easy on you <br>because the real one won't either.
+            </div>
+            <div style="margin-top:32px; opacity:0; transition: opacity 0.5s ease 0.8s;" id="splashLoader">
+                <div style="display:flex; gap:6px; justify-content:center;">
+                    <div style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6);animation:splashDot 1.2s infinite 0s;"></div>
+                    <div style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6);animation:splashDot 1.2s infinite 0.2s;"></div>
+                    <div style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.6);animation:splashDot 1.2s infinite 0.4s;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Progress Bar -->
     <div class="progress-bar-container" id="progressBar">
         <div class="progress-bar"></div>
@@ -1602,6 +1634,25 @@
                 item.style.display = item.textContent.toLowerCase().includes(query) ? 'flex' : 'none';
             });
         }
+        // ── SPLASH SCREEN ──
+        (function() {
+            if (sessionStorage.getItem('splashShown')) {
+                document.getElementById('splashScreen').style.display = 'none';
+                return;
+            }
+            sessionStorage.setItem('splashShown', '1');
+            const splash = document.getElementById('splashScreen');
+            const content = document.getElementById('splashContent');
+            const tagline = document.getElementById('splashTagline');
+            const loader = document.getElementById('splashLoader');
+            setTimeout(() => { content.style.opacity = '1'; content.style.transform = 'translateY(0)'; }, 100);
+            setTimeout(() => { tagline.style.opacity = '1'; }, 500);
+            setTimeout(() => { loader.style.opacity = '1'; }, 900);
+            setTimeout(() => {
+                splash.style.opacity = '0';
+                setTimeout(() => { splash.style.display = 'none'; }, 800);
+            }, 2800);
+        })();
 
         // ── STARTUP ──
         if (localStorage.getItem('theme')) {
